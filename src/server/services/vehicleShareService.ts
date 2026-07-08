@@ -136,6 +136,74 @@ export const removeShare = async (shareId: string, currentUserId: string): Promi
   return createSuccessResponse(null, 'Share removed successfully');
 };
 
+export const transferOwnership = async (
+  vehicleId: string,
+  newOwnerUserId: string,
+  currentUserId: string
+): Promise<ApiResponse> => {
+  // Verify the vehicle exists and current user is the owner
+  const vehicle = await db.query.vehicleTable.findFirst({
+    where: (v, { eq }) => eq(v.id, vehicleId)
+  });
+
+  if (!vehicle) {
+    throw new AppError('Vehicle not found', Status.NOT_FOUND);
+  }
+
+  if (vehicle.userId !== currentUserId) {
+    throw new AppError('Only the vehicle owner can transfer ownership', Status.FORBIDDEN);
+  }
+
+  // Prevent self-transfer
+  if (newOwnerUserId === currentUserId) {
+    throw new AppError('You already own this vehicle', Status.BAD_REQUEST);
+  }
+
+  // Verify the target user exists and is active
+  const targetUser = await db.query.usersTable.findFirst({
+    where: (u, { eq }) => eq(u.id, newOwnerUserId)
+  });
+
+  if (!targetUser) {
+    throw new AppError('User not found', Status.NOT_FOUND);
+  }
+
+  if (targetUser.status !== 'active') {
+    throw new AppError('Cannot transfer ownership to a user who is not active', Status.BAD_REQUEST);
+  }
+
+  await db.transaction(async (tx) => {
+    // Remove any existing share for the new owner (they're now the owner)
+    const existingShare = await tx.query.vehicleShareTable.findFirst({
+      where: (s, { eq, and }) => and(eq(s.vehicleId, vehicleId), eq(s.userId, newOwnerUserId))
+    });
+
+    if (existingShare) {
+      await tx
+        .delete(schema.vehicleShareTable)
+        .where(eq(schema.vehicleShareTable.id, existingShare.id));
+    }
+
+    // Transfer ownership
+    await tx
+      .update(schema.vehicleTable)
+      .set({ userId: newOwnerUserId })
+      .where(eq(schema.vehicleTable.id, vehicleId));
+
+    // Add editor share for the old owner so they retain access
+    await tx.insert(schema.vehicleShareTable).values({
+      vehicleId,
+      userId: currentUserId,
+      role: 'editor'
+    });
+  });
+
+  return createSuccessResponse(
+    { vehicleId, newOwnerId: newOwnerUserId },
+    'Ownership transferred successfully'
+  );
+};
+
 export const getAccessibleVehicleIds = async (userId: string): Promise<string[]> => {
   // Get vehicles owned by the user
   const ownedVehicles = await db.query.vehicleTable.findMany({

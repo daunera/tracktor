@@ -8,9 +8,14 @@ import { env as publicEnv } from '$env/dynamic/public';
 export const clientEnv = {
   DEMO_MODE: publicEnv.TRACKTOR_DEMO_MODE === 'true',
   // Allow disabling auth via either the public or private env var so it works in container deployments
-  DISABLE_AUTH: publicEnv.TRACKTOR_DISABLE_AUTH === 'true' || privateEnv.TRACKTOR_DISABLE_AUTH === 'true',
-  DISABLE_PASSWORD_LOGIN: publicEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true' || privateEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true',
-  DISABLE_GOOGLE_LOGIN: publicEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true' || privateEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true'
+  DISABLE_AUTH:
+    publicEnv.TRACKTOR_DISABLE_AUTH === 'true' || privateEnv.TRACKTOR_DISABLE_AUTH === 'true',
+  DISABLE_PASSWORD_LOGIN:
+    publicEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true' ||
+    privateEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true',
+  DISABLE_GOOGLE_LOGIN:
+    publicEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true' ||
+    privateEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true'
 } as const;
 
 function getCorsOrigins(origins?: string): string[] {
@@ -55,7 +60,7 @@ export const serverEnv = {
   GOOGLE_CLIENT_ID: privateEnv.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET || '',
   SUPERADMIN_EMAILS: privateEnv.SUPERADMIN_EMAILS || '',
-  SUPERADMIN_USERNAMES: privateEnv.SUPERADMIN_USERNAMES || '',
+  SUPERADMIN_USERNAMES: privateEnv.SUPERADMIN_USERNAMES || ''
 } as const;
 
 /**

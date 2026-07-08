@@ -738,5 +738,9 @@
   "share_menu_edit": "Szerkesztés",
   "share_menu_delete": "Eltávolítás",
   "share_add_sheet_title": "Megosztás hozzáadása",
-  "share_edit_sheet_title": "Megosztás szerkesztése"
+  "share_edit_sheet_title": "Megosztás szerkesztése",
+  "share_transfer_ownership": "Tulajdonjog átadása",
+  "share_transfer_confirm_title": "Tulajdonjog átadása",
+  "share_transfer_confirm_message": "Biztosan átadod a tulajdonjogot {user} felhasználónak? Ezzel elveszíted a jármű tulajdonjogát.",
+  "share_toast_transferred": "Tulajdonjog sikeresen átadva"
 }

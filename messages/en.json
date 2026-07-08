@@ -737,5 +737,9 @@
   "share_menu_edit": "Edit",
   "share_menu_delete": "Remove",
   "share_add_sheet_title": "Add Share",
-  "share_edit_sheet_title": "Edit Share"
+  "share_edit_sheet_title": "Edit Share",
+  "share_transfer_ownership": "Transfer Ownership",
+  "share_transfer_confirm_title": "Transfer Ownership",
+  "share_transfer_confirm_message": "Are you sure you want to transfer ownership to {user}? You will lose ownership of this vehicle.",
+  "share_toast_transferred": "Ownership transferred successfully"
 }
