@@ -1,6 +1,7 @@
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
-import { timestamps } from './audit';
+import { usersTable } from './auth';
+import { timestamps, auditUser } from './audit';
 
 export const vehicleTable = table('vehicles', {
   id: t
@@ -22,5 +23,10 @@ export const vehicleTable = table('vehicles', {
     .notNull()
     .default('petrol'),
   customFields: t.text(),
-  ...timestamps
+  userId: t
+    .text()
+    .notNull()
+    .references(() => usersTable.id),
+  ...timestamps,
+  ...auditUser
 });

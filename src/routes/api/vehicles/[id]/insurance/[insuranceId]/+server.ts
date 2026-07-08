@@ -52,7 +52,12 @@ export const PUT: RequestHandler = async (event) => {
       body.recurrenceInterval = 1;
     }
 
-    const result = await insuranceService.updateInsurance(id, insuranceId, body);
+    const result = await insuranceService.updateInsurance(
+      id,
+      insuranceId,
+      body,
+      event.locals.user?.username
+    );
     return json(result);
   });
 };

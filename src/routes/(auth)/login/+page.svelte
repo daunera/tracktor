@@ -4,14 +4,36 @@
   import { authStore } from '$stores/auth.svelte';
   import { onMount } from 'svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
+  import { page } from '$app/stores';
 
   let authCheckComplete = $state(false);
+  let initialError = $state<string | null>(null);
 
   onMount(async () => {
     await authStore.checkAuthStatus();
     authCheckComplete = true;
 
-    if (authStore.isLoggedIn) goto('/dashboard', { replaceState: true });
+    // Check if user was blocked/rejected (detected by store's checkAuthStatus)
+    if (authStore.blockedReason) {
+      initialError = authStore.blockedReason;
+      authStore.blockedReason = null;
+    } else {
+      // Check URL params (e.g. from Google OAuth redirect)
+      const reasonParam = $page.url.searchParams.get('reason');
+      if (reasonParam === 'rejected') {
+        initialError =
+          $page.url.searchParams.get('message') ||
+          'Your account has been blocked by an administrator.';
+      }
+    }
+
+    if (authStore.isLoggedIn) {
+      if (authStore.user?.status === 'pending') {
+        goto('/pending', { replaceState: true });
+      } else {
+        goto('/dashboard', { replaceState: true });
+      }
+    }
     if (!authStore.hasUsers) goto('/register', { replaceState: true });
   });
 </script>
@@ -29,5 +51,5 @@
     <Skeleton id="login-loading-button" class="h-10 w-full" />
   </div>
 {:else}
-  <LoginForm />
+  <LoginForm {initialError} />
 {/if}

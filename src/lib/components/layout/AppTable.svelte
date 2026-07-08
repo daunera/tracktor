@@ -33,9 +33,10 @@
   type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    searchColumn?: string;
   };
   let pageSize = $state('5');
-  let { columns, data }: DataTableProps<TData, TValue> = $props();
+  let { columns, data, searchColumn }: DataTableProps<TData, TValue> = $props();
   let pagination = $derived<PaginationState>({
     pageIndex: 0,
     pageSize: Number(pageSize)
@@ -91,16 +92,18 @@
     </div>
   {:else}
     <div class="mb-4 flex flex-row items-center justify-between gap-2">
-      <Input
-        placeholder={m.common_search()}
-        value={(table.getColumn('notes')?.getFilterValue() as string) ?? ''}
-        oninput={(e) => table.getColumn('notes')?.setFilterValue(e.currentTarget.value)}
-        onchange={(e) => {
-          table.getColumn('notes')?.setFilterValue(e.currentTarget.value);
-        }}
-        icon={Search}
-        class="bg-background/60 h-full max-w-sm"
-      />
+      {#if searchColumn && table.getColumn(searchColumn)}
+        <Input
+          placeholder={m.common_search()}
+          value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''}
+          oninput={(e) => table.getColumn(searchColumn)?.setFilterValue(e.currentTarget.value)}
+          onchange={(e) => {
+            table.getColumn(searchColumn)?.setFilterValue(e.currentTarget.value);
+          }}
+          icon={Search}
+          class="bg-background/60 h-full max-w-sm"
+        />
+      {/if}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
           {#snippet child({ props })}

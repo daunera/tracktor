@@ -2,11 +2,16 @@ import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
 import { env } from '$lib/config/env.server';
+import { isGoogleLoginEnabled, isPasswordLoginEnabled } from '$server/services/googleOAuth';
 import { withRouteErrorHandling } from '$server/utils/route-handler';
 
 // POST /api/auth - Login with username/password
 export const POST: RequestHandler = async (event) => {
   return withRouteErrorHandling('Auth POST error:', async () => {
+    if (env.DISABLE_PASSWORD_LOGIN) {
+      throw error(400, 'Password login is disabled');
+    }
+
     const body = event.locals.requestBody || (await event.request.json());
 
     // Validate request body
@@ -36,6 +41,8 @@ export const GET: RequestHandler = async (event) => {
   return withRouteErrorHandling('Auth GET error:', async () => {
     const result = await authService.getUsersCount();
     const isAuthDisabled = env.DISABLE_AUTH;
+    const passwordLoginEnabled = isPasswordLoginEnabled();
+    const googleLoginEnabled = isGoogleLoginEnabled();
 
     // Check if user has a valid session
     const sessionToken = event.cookies.get('session');
@@ -44,6 +51,23 @@ export const GET: RequestHandler = async (event) => {
     if (sessionToken) {
       try {
         const sessionResult = await authService.validateSession(sessionToken);
+        if (sessionResult.user?.status === 'rejected') {
+          // User has been rejected/blocked — don't treat as authenticated
+          return json({
+            ...result,
+            data: {
+              ...result.data,
+              isAuthDisabled,
+              passwordLoginEnabled,
+              googleLoginEnabled,
+              user: null,
+              isAuthenticated: false,
+              reason: 'rejected',
+              message:
+                'Your account has been blocked by an administrator. Please contact the system administrator.'
+            }
+          });
+        }
         user = sessionResult.user;
       } catch (err) {
         // Session is invalid, but don't throw error - just return null user
@@ -56,6 +80,8 @@ export const GET: RequestHandler = async (event) => {
       data: {
         ...result.data,
         isAuthDisabled,
+        passwordLoginEnabled,
+        googleLoginEnabled,
         user,
         isAuthenticated: isAuthDisabled || !!user
       }

@@ -1,7 +1,7 @@
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
 import { vehicleTable } from './vehicle';
-import { timestamps } from './audit';
+import { timestamps, auditUser } from './audit';
 
 export const fuelLogTable = table('fuel_logs', {
   id: t
@@ -21,5 +21,6 @@ export const fuelLogTable = table('fuel_logs', {
   missedLast: t.integer({ mode: 'boolean' }).notNull(),
   notes: t.text(),
   attachment: t.text(),
-  ...timestamps
+  ...timestamps,
+  ...auditUser
 });

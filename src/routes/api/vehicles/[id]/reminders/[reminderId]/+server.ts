@@ -26,7 +26,12 @@ export const PUT: RequestHandler = async (event) => {
 
     const body = event.locals.requestBody || (await event.request.json());
 
-    const result = await reminderService.updateReminder(id, reminderId, body);
+    const result = await reminderService.updateReminder(
+      id,
+      reminderId,
+      body,
+      event.locals.user?.username
+    );
     return json(result);
   });
 };

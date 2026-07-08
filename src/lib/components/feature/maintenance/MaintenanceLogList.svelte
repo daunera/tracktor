@@ -119,7 +119,7 @@
   <ResourceState state="empty" message={m.maintenance_list_empty()} />
 {:else}
   <div id="maintenance-log-table" class="maintenance-log-table">
-    <AppTable data={maintenanceStore.maintenanceLogs || []} {columns} />
+    <AppTable data={maintenanceStore.maintenanceLogs || []} {columns} searchColumn="notes" />
   </div>
 {/if}
 

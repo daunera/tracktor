@@ -40,7 +40,13 @@ export async function validateSessionToken(token: string): Promise<SessionValida
       },
       user: {
         id: usersTable.id,
-        username: usersTable.username
+        username: usersTable.username,
+        email: usersTable.email,
+        name: usersTable.name,
+        avatarUrl: usersTable.avatarUrl,
+        authProvider: usersTable.authProvider,
+        status: usersTable.status,
+        role: usersTable.role
       }
     })
     .from(sessionsTable)
@@ -76,7 +82,13 @@ export async function validateSessionToken(token: string): Promise<SessionValida
       },
       user: {
         id: user.id,
-        username: user.username
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        authProvider: user.authProvider,
+        status: user.status,
+        role: user.role
       }
     };
   }
@@ -89,7 +101,13 @@ export async function validateSessionToken(token: string): Promise<SessionValida
     },
     user: {
       id: user.id,
-      username: user.username
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      authProvider: user.authProvider,
+      status: user.status,
+      role: user.role
     }
   };
 }
@@ -107,6 +125,12 @@ export interface Session {
 export interface User {
   id: string;
   username: string;
+  email?: string | null;
+  name?: string | null;
+  avatarUrl?: string | null;
+  authProvider?: string;
+  status?: string;
+  role?: string;
 }
 
 export interface SessionValidationResult {

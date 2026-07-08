@@ -16,7 +16,6 @@
   import { env } from '$lib/config/env';
   import Notifications from './Notifications.svelte';
   import * as m from '$lib/paraglide/messages';
-  import Button from '../ui/button/button.svelte';
   import Badge from '$ui/badge/badge.svelte';
   import Settings from '@lucide/svelte/icons/settings';
   import { goto } from '$app/navigation';
@@ -63,17 +62,6 @@
           <Notifications />
         {/if}
         {#if authStore.isLoggedIn}
-          <Button
-            variant="ghost"
-            size="icon"
-            onclick={() => {
-              goto('/settings');
-            }}
-            aria-label={m.header_settings_aria()}
-            title={m.settings_title()}
-          >
-            <Settings class="text-primary h-[1.2rem] w-[1.2rem]" />
-          </Button>
           {#if !authStore.isAuthDisabled}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger
@@ -82,9 +70,37 @@
                 aria-label={m.header_account_aria()}
                 title={m.header_account_title()}
               >
-                <CircleUser class="text-primary h-[1.2rem] w-[1.2rem]" />
+                {#if authStore.user?.avatarUrl}
+                  <img
+                    src={authStore.user.avatarUrl}
+                    alt={m.header_account_aria()}
+                    class="h-9 w-9 rounded-full object-cover"
+                    onerror={(e) => {
+                      const img = e.currentTarget as HTMLImageElement;
+                      img.style.display = 'none';
+                      const fallback = img.nextElementSibling;
+                      if (fallback) fallback.classList.remove('hidden');
+                    }}
+                  />
+                  <CircleUser class="text-primary hidden h-[1.2rem] w-[1.2rem]" />
+                {:else}
+                  <CircleUser class="text-primary h-[1.2rem] w-[1.2rem]" />
+                {/if}
               </DropdownMenu.Trigger>
               <DropdownMenu.Content id="account-menu" align="end">
+                {#if authStore.user}
+                  <DropdownMenu.Item disabled class="opacity-70">
+                    <div class="flex flex-col gap-1 py-1">
+                      <span class="text-sm font-medium"
+                        >{authStore.user.name || authStore.user.username}</span
+                      >
+                      {#if authStore.user.email}
+                        <span class="text-muted-foreground text-xs">{authStore.user.email}</span>
+                      {/if}
+                    </div>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator />
+                {/if}
                 <DropdownMenu.Item
                   id="profile-menu-item"
                   onclick={() => {
@@ -99,30 +115,44 @@
                   <UserCog class="h-[1.2rem] w-[1.2rem]" />
                   {m.profile_menu_item()}
                 </DropdownMenu.Item>
-                <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger
-                    id="tools-submenu-trigger"
-                    class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none focus-visible:ring-1"
-                  >
-                    <ToolCase class="h-[1.2rem] w-[1.2rem]" />
-                    <span class="flex-1 text-left">{m.tools_menu()}</span>
-                  </DropdownMenu.SubTrigger>
-                  <DropdownMenu.SubContent id="tools-submenu" alignOffset={-4} class="min-w-48">
-                    <DropdownMenu.Item
-                      id="export-import-menu-item"
-                      onclick={() => {
-                        sheetStore.openSheet(
-                          DataExportImport,
-                          m.data_export_import_sheet_title(),
-                          m.data_export_import_sheet_desc()
-                        );
-                      }}
+                {#if authStore.isAdmin}
+                  <DropdownMenu.Sub>
+                    <DropdownMenu.SubTrigger
+                      id="tools-submenu-trigger"
+                      class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none focus-visible:ring-1"
                     >
-                      <Database class="h-[1.2rem] w-[1.2rem]" />
-                      {m.data_export_import_menu_item()}
-                    </DropdownMenu.Item>
-                  </DropdownMenu.SubContent>
-                </DropdownMenu.Sub>
+                      <ToolCase class="h-[1.2rem] w-[1.2rem]" />
+                      <span class="flex-1 text-left">{m.tools_menu()}</span>
+                    </DropdownMenu.SubTrigger>
+                    <DropdownMenu.SubContent id="tools-submenu" alignOffset={-4} class="min-w-48">
+                      <DropdownMenu.Item
+                        id="export-import-menu-item"
+                        onclick={() => {
+                          sheetStore.openSheet(
+                            DataExportImport,
+                            m.data_export_import_sheet_title(),
+                            m.data_export_import_sheet_desc()
+                          );
+                        }}
+                      >
+                        <Database class="h-[1.2rem] w-[1.2rem]" />
+                        {m.data_export_import_menu_item()}
+                      </DropdownMenu.Item>
+                    </DropdownMenu.SubContent>
+                  </DropdownMenu.Sub>
+                {/if}
+                {#if authStore.isAdmin}
+                  <DropdownMenu.Separator />
+                  <DropdownMenu.Item
+                    id="settings-menu-item"
+                    onclick={() => {
+                      goto('/settings');
+                    }}
+                  >
+                    <Settings class="h-[1.2rem] w-[1.2rem]" />
+                    {m.settings_title()}
+                  </DropdownMenu.Item>
+                {/if}
                 <DropdownMenu.Separator />
                 <DropdownMenu.Item id="logout-menu-item" onclick={authStore.logout}>
                   <LogOut class="h-[1.2rem] w-[1.2rem]" />

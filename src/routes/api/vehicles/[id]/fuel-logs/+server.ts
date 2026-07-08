@@ -63,7 +63,7 @@ export const POST: RequestHandler = async (event) => {
       throw error(400, `Validation failed: ${JSON.stringify(errors.fieldErrors)}`);
     }
 
-    const result = await fuelLogService.addFuelLog(id, body);
+    const result = await fuelLogService.addFuelLog(id, body, event.locals.user?.username);
     return json(result, { status: 201 });
   });
 };

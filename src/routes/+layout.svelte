@@ -8,12 +8,14 @@
   import { Toaster } from '$ui/sonner';
   import LabelWithIcon from '$appui/LabelWithIcon.svelte';
   import { navigating, page } from '$app/state';
+  import { goto } from '$app/navigation';
   import Header from '$layout/Header.svelte';
   import { onMount } from 'svelte';
   import { env } from '$lib/config/env';
   import { toast } from 'svelte-sonner';
   import { configStore } from '$lib/stores/config.svelte';
   import { themeStore } from '$lib/stores/theme.svelte';
+  import { authStore } from '$lib/stores/auth.svelte';
   import { demo_banner, default_login, app_name } from '$lib/paraglide/messages/_index.js';
   import { app_new_update_available } from '$lib/paraglide/messages';
 
@@ -53,6 +55,14 @@
     themeStore.initializeTheme();
 
     detectSWUpdate();
+
+    // Detect blocked users on every page load
+    authStore.checkAuthStatus().then(() => {
+      if (authStore.blockedReason) {
+        authStore.blockedReason = null;
+        goto('/login');
+      }
+    });
 
     configStore.getCustomCss().then((css) => {
       customCss = css;

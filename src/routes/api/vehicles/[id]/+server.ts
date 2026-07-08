@@ -11,7 +11,7 @@ export const GET: RequestHandler = async (event) => {
       throw error(400, 'Vehicle ID is required');
     }
 
-    const result = await vehicleService.getVehicleById(id);
+    const result = await vehicleService.getVehicleById(id, event.locals.user?.id);
     return json(result);
   });
 };

@@ -19,10 +19,12 @@
   import Gauge from '@lucide/svelte/icons/gauge';
   import ToggleLeft from '@lucide/svelte/icons/toggle-left';
   import Bell from '@lucide/svelte/icons/bell';
+  import Users from '@lucide/svelte/icons/users';
   import NotificationProvidersSettings from '$feature/settings/NotificationProvidersSettings.svelte';
   import SettingsFeaturesTab from '$feature/settings/SettingsFeaturesTab.svelte';
   import SettingsPersonalizationTab from '$feature/settings/SettingsPersonalizationTab.svelte';
   import SettingsUnitsTab from '$feature/settings/SettingsUnitsTab.svelte';
+  import SettingsUsersTab from '$feature/settings/SettingsUsersTab.svelte';
   import Button from '$lib/components/ui/button/button.svelte';
   import { goto } from '$app/navigation';
   import SettingFormSection from '$lib/components/feature/settings/SettingFormSection.svelte';
@@ -129,6 +131,11 @@
       id: 'notifications',
       label: m.settings_tab_notifications(),
       icon: Bell
+    },
+    {
+      id: 'users',
+      label: m.settings_tab_users(),
+      icon: Users
     }
   ]);
 
@@ -307,6 +314,13 @@
           </SettingsSection>
         {/if}
 
+        <!-- Users Section -->
+        {#if activeSection === 'users'}
+          <SettingsSection title={m.settings_tab_users()} description={m.settings_users_desc()}>
+            <SettingsUsersTab />
+          </SettingsSection>
+        {/if}
+
         <!-- Submit Button (always visible at bottom) -->
         <div class="mt-6 flex flex-col gap-4 pt-6">
           <!-- Error Summary -->
@@ -328,7 +342,7 @@
             </div>
           {/if}
 
-          {#if activeSection !== 'notifications'}
+          {#if activeSection !== 'notifications' && activeSection !== 'users'}
             <div class="flex justify-end">
               <SubmitButton {processing} class="w-full sm:w-auto">
                 {m.settings_update_button()}

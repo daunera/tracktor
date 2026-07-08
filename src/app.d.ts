@@ -11,6 +11,12 @@ declare global {
       user?: {
         id: string;
         username: string;
+        email?: string | null;
+        name?: string | null;
+        avatarUrl?: string | null;
+        authProvider?: string;
+        status?: string;
+        role?: string;
       };
     }
     // interface PageData {}
@@ -37,6 +43,11 @@ declare namespace NodeJS {
     APP_VERSION?: string;
     TRACKTOR_DISABLE_AUTH: string;
     TRACKTOR_API_BASE_URL?: string;
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    SUPERADMIN_EMAILS?: string;
+    DISABLE_PASSWORD_LOGIN?: string;
+    DISABLE_GOOGLE_LOGIN?: string;
   }
 }
 

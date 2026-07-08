@@ -21,7 +21,8 @@ type InsurancePayload = {
 
 export const addInsurance = async (
   vehicleId: string,
-  insuranceData: InsurancePayload
+  insuranceData: InsurancePayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
   const sanitizedInsuranceData = clearFixedEndDate(insuranceData);
@@ -30,7 +31,8 @@ export const addInsurance = async (
     .values({
       ...sanitizedInsuranceData,
       vehicleId: vehicleId,
-      id: undefined
+      id: undefined,
+      createdBy: username || undefined
     })
     .returning();
   return createSuccessResponse(insurance[0], 'Insurance details added successfully.');
@@ -61,7 +63,8 @@ export const getInsuranceById = async (id: string): Promise<ApiResponse> => {
 export const updateInsurance = async (
   vehicleId: string,
   id: string,
-  insuranceData: InsurancePayload
+  insuranceData: InsurancePayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   requireRecord(
     await db.query.insuranceTable.findFirst({
@@ -72,7 +75,7 @@ export const updateInsurance = async (
   );
   const updatedInsurance = await db
     .update(schema.insuranceTable)
-    .set(clearFixedEndDate(insuranceData))
+    .set({ ...clearFixedEndDate(insuranceData), updatedBy: username || undefined })
     .where(eq(schema.insuranceTable.id, id))
     .returning();
   return createSuccessResponse(updatedInsurance[0], 'Insurance details updated successfully.');

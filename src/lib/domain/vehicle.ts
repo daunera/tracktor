@@ -14,6 +14,9 @@ export interface Vehicle {
   image: string | null;
   fuelType: 'petrol' | 'diesel' | 'electric' | 'lpg' | 'cng';
   customFields?: Record<string, string> | null;
+  userId?: string;
+  ownerName?: string | null;
+  ownerUsername?: string;
 }
 
 export const FUEL_TYPES = {

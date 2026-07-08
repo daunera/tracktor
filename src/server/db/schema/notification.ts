@@ -1,7 +1,7 @@
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
 import { vehicleTable } from './vehicle';
-import { timestamps } from './audit';
+import { timestamps, auditUser } from './audit';
 
 export const notificationTable = table('notifications', {
   id: t
@@ -20,5 +20,6 @@ export const notificationTable = table('notifications', {
   dueDate: t.text().notNull(),
   isRead: t.integer({ mode: 'boolean' }).notNull().default(false),
   clearedAt: t.text(),
-  ...timestamps
+  ...timestamps,
+  ...auditUser
 });

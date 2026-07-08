@@ -8,8 +8,11 @@
   import SquareKanban from '@lucide/svelte/icons/square-kanban';
   import Wrench from '@lucide/svelte/icons/wrench';
   import Bell from '@lucide/svelte/icons/bell';
+  import Users from '@lucide/svelte/icons/users';
   import { configStore } from '$stores/config.svelte';
   import * as m from '$lib/paraglide/messages';
+
+  let { isOwner = false }: { isOwner?: boolean } = $props();
 
   type Section = {
     label: string;
@@ -18,7 +21,7 @@
     featureKey?: keyof typeof configStore.configs;
   };
 
-  const sections: Section[] = [
+  const baseSections: Section[] = [
     {
       label: m.nav_overview(),
       href: '/dashboard/overview',
@@ -56,6 +59,14 @@
       featureKey: 'featureReminders'
     }
   ];
+
+  const sharingSection: Section = {
+    label: m.nav_sharing(),
+    href: '/dashboard/sharing',
+    icon: Users
+  };
+
+  let sections = $derived(isOwner ? [...baseSections, sharingSection] : baseSections);
 
   let visibleSections = $derived(
     sections.filter((section) => {

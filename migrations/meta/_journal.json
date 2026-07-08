@@ -113,6 +113,20 @@
       "when": 1776743311600,
       "tag": "20260421034831_add_rate_column",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1776760800000,
+      "tag": "20260708000000_multi_user_oauth_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1776760800001,
+      "tag": "20260708000001_add_user_role",
+      "breakpoints": true
     }
   ]
 }

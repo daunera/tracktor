@@ -23,7 +23,8 @@ type FuelLogPayload = {
 
 export const addFuelLog = async (
   vehicleId: string,
-  fuelLogData: FuelLogPayload
+  fuelLogData: FuelLogPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
   const fuelLog = await db
@@ -31,7 +32,8 @@ export const addFuelLog = async (
     .values({
       ...fuelLogData,
       vehicleId: vehicleId,
-      id: undefined
+      id: undefined,
+      createdBy: username || undefined
     })
     .returning();
   return createSuccessResponse(fuelLog[0], 'Fuel log added successfully.');
@@ -155,7 +157,8 @@ export const getFuelLogById = async (id: string): Promise<ApiResponse> => {
 export const updateFuelLog = async (
   vehicleId: string,
   id: string,
-  fuelLogData: FuelLogPayload
+  fuelLogData: FuelLogPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   // Validate that the fuel log exists and belongs to the specified vehicle
   requireRecord(
@@ -168,7 +171,8 @@ export const updateFuelLog = async (
   const updatedLog = await db
     .update(schema.fuelLogTable)
     .set({
-      ...fuelLogData
+      ...fuelLogData,
+      updatedBy: username || undefined
     })
     .where(eq(schema.fuelLogTable.id, id))
     .returning();
@@ -181,13 +185,14 @@ export const deleteFuelLog = async (id: string): Promise<ApiResponse> => {
 
 export const addFuelLogByLicensePlate = async (
   licensePlate: string,
-  fuelLogData: FuelLogPayload
+  fuelLogData: FuelLogPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExistsByLicensePlate(licensePlate);
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (vehicle, { eq }) => eq(vehicle.licensePlate, licensePlate)
   });
-  return await addFuelLog(vehicle!.id, fuelLogData);
+  return await addFuelLog(vehicle!.id, fuelLogData, username);
 };
 
 export const getFuelLogsByLicensePlate = async (licensePlate: string): Promise<ApiResponse> => {

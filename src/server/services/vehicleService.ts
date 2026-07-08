@@ -1,10 +1,12 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { ApiResponse } from '$lib/response';
 import type { Vehicle } from '$lib/domain/vehicle';
 import { performDelete } from '../utils/serviceUtils';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { getAccessibleVehicleIds, getUserRoleForVehicle } from './vehicleShareService';
+import { AppError, Status } from '$server/exceptions/AppError';
 
 type VehiclePayload = Omit<Vehicle, 'insuranceStatus' | 'puccStatus'>;
 type VehicleMutationPayload = Omit<VehiclePayload, 'id'>;
@@ -108,30 +110,56 @@ const calculateOverallMileage = async (vehicleId: string) => {
   return parseFloat(avgMileage.toFixed(2));
 };
 
-export const addVehicle = async (vehicleData: VehicleMutationPayload): Promise<ApiResponse> => {
+export const addVehicle = async (
+  vehicleData: VehicleMutationPayload,
+  userId: string,
+  username?: string | null
+): Promise<ApiResponse> => {
   const processedData = serializeVehiclePayload(vehicleData);
-  const [vehicle] = await db.insert(schema.vehicleTable).values(processedData).returning();
+  const [vehicle] = await db
+    .insert(schema.vehicleTable)
+    .values({
+      ...processedData,
+      userId,
+      createdBy: username || undefined
+    })
+    .returning();
 
   return createSuccessResponse(parseVehicleRecord(vehicle), 'Vehicle added successfully.');
 };
 
-export const getAllVehicles = async (): Promise<ApiResponse> => {
-  const [vehicles, insurances, pollutionCerts] = await Promise.all([
-    db.query.vehicleTable.findMany({
-      columns: {
-        id: true,
-        make: true,
-        model: true,
-        year: true,
-        licensePlate: true,
-        color: true,
-        odometer: true,
-        vin: true,
-        image: true,
-        fuelType: true,
-        customFields: true
-      }
-    }),
+export const getAllVehicles = async (userId?: string): Promise<ApiResponse> => {
+  let accessibleIds: string[] | undefined;
+  if (userId) {
+    accessibleIds = await getAccessibleVehicleIds(userId);
+  }
+
+  const vehiclesQuery = db
+    .select({
+      id: schema.vehicleTable.id,
+      make: schema.vehicleTable.make,
+      model: schema.vehicleTable.model,
+      year: schema.vehicleTable.year,
+      licensePlate: schema.vehicleTable.licensePlate,
+      color: schema.vehicleTable.color,
+      odometer: schema.vehicleTable.odometer,
+      vin: schema.vehicleTable.vin,
+      image: schema.vehicleTable.image,
+      fuelType: schema.vehicleTable.fuelType,
+      customFields: schema.vehicleTable.customFields,
+      userId: schema.vehicleTable.userId,
+      ownerName: schema.usersTable.name,
+      ownerUsername: schema.usersTable.username
+    })
+    .from(schema.vehicleTable)
+    .leftJoin(schema.usersTable, eq(schema.vehicleTable.userId, schema.usersTable.id));
+
+  if (accessibleIds) {
+    vehiclesQuery.where(inArray(schema.vehicleTable.id, accessibleIds));
+  }
+  const vehicles = await vehiclesQuery;
+
+  const [insurances, pollutionCerts] = await Promise.all([
     db.query.insuranceTable.findMany({
       columns: { vehicleId: true, endDate: true }
     }),
@@ -173,13 +201,38 @@ export const getAllVehicles = async (): Promise<ApiResponse> => {
   return createSuccessResponse(enrichedVehicles);
 };
 
-export const getVehicleById = async (id: string): Promise<ApiResponse> => {
-  const vehicle = requireRecord(
-    await db.query.vehicleTable.findFirst({
-      where: (vehicles, { eq }) => eq(vehicles.id, id)
-    }),
-    `No vehicle found for id : ${id}`
-  );
+export const getVehicleById = async (id: string, userId?: string): Promise<ApiResponse> => {
+  const vehicleRow = await db
+    .select({
+      id: schema.vehicleTable.id,
+      make: schema.vehicleTable.make,
+      model: schema.vehicleTable.model,
+      year: schema.vehicleTable.year,
+      licensePlate: schema.vehicleTable.licensePlate,
+      vin: schema.vehicleTable.vin,
+      color: schema.vehicleTable.color,
+      odometer: schema.vehicleTable.odometer,
+      image: schema.vehicleTable.image,
+      fuelType: schema.vehicleTable.fuelType,
+      customFields: schema.vehicleTable.customFields,
+      userId: schema.vehicleTable.userId,
+      ownerName: schema.usersTable.name,
+      ownerUsername: schema.usersTable.username
+    })
+    .from(schema.vehicleTable)
+    .leftJoin(schema.usersTable, eq(schema.vehicleTable.userId, schema.usersTable.id))
+    .where(eq(schema.vehicleTable.id, id))
+    .then((rows) => rows[0] || null);
+
+  const vehicle = requireRecord(vehicleRow, `No vehicle found for id : ${id}`);
+
+  // Check access if userId is provided
+  if (userId) {
+    const role = await getUserRoleForVehicle(userId, id);
+    if (!role) {
+      throw new AppError('Vehicle not found', Status.NOT_FOUND);
+    }
+  }
 
   const [currentOdometer, overallMileage] = await Promise.all([
     getLatestOdometer(id),
@@ -195,15 +248,16 @@ export const getVehicleById = async (id: string): Promise<ApiResponse> => {
 
 export const updateVehicle = async (
   id: string,
-  vehicleData: VehicleMutationPayload
+  vehicleData: VehicleMutationPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
-  await getVehicleById(id); // Validates vehicle exists
+  await getVehicleById(id); // Validates vehicle exists, no userId needed for basic check
 
   const processedData = serializeVehiclePayload(vehicleData);
 
   const [updatedVehicle] = await db
     .update(schema.vehicleTable)
-    .set(processedData)
+    .set({ ...processedData, updatedBy: username || undefined })
     .where(eq(schema.vehicleTable.id, id))
     .returning();
 
@@ -215,7 +269,11 @@ export const deleteVehicle = async (id: string): Promise<ApiResponse> => {
 };
 
 // Get vehicles with minimal data for dropdown/selection purposes
-export const getVehiclesMinimal = async (): Promise<ApiResponse> => {
+export const getVehiclesMinimal = async (userId?: string): Promise<ApiResponse> => {
+  let accessibleIds: string[] | undefined;
+  if (userId) {
+    accessibleIds = await getAccessibleVehicleIds(userId);
+  }
   const vehicles = await db.query.vehicleTable.findMany({
     columns: {
       id: true,
@@ -223,14 +281,15 @@ export const getVehiclesMinimal = async (): Promise<ApiResponse> => {
       model: true,
       year: true,
       licensePlate: true
-    }
+    },
+    ...(accessibleIds ? { where: (v, { inArray }) => inArray(v.id, accessibleIds) } : {})
   });
   return createSuccessResponse(vehicles);
 };
 
-export const getVehicleSummary = async (id: string): Promise<ApiResponse> => {
+export const getVehicleSummary = async (id: string, userId?: string): Promise<ApiResponse> => {
   const [vehicle, fuelLogsCount, maintenanceLogsCount] = await Promise.all([
-    getVehicleById(id),
+    getVehicleById(id, userId),
     db.query.fuelLogTable.findMany({
       where: (log, { eq }) => eq(log.vehicleId, id),
       columns: { id: true }

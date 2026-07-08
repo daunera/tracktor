@@ -43,7 +43,11 @@ export const POST: RequestHandler = async (event) => {
       throw error(400, 'Cost must be a non-negative number');
     }
 
-    const result = await maintenanceLogService.addMaintenanceLog(id, body);
+    const result = await maintenanceLogService.addMaintenanceLog(
+      id,
+      body,
+      event.locals.user?.username
+    );
     return json(result, { status: 201 });
   });
 };

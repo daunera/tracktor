@@ -39,7 +39,11 @@ export const PUT: RequestHandler = async (event) => {
       throw error(400, 'Cost must be a non-negative number');
     }
 
-    const result = await maintenanceLogService.updateMaintenanceLog(logId, body);
+    const result = await maintenanceLogService.updateMaintenanceLog(
+      logId,
+      body,
+      event.locals.user?.username
+    );
     return json(result);
   });
 };

@@ -5,13 +5,15 @@ import {
   pollutionCertificateTable,
   vehicleTable,
   notificationTable,
-  configTable
+  configTable,
+  usersTable
 } from '$server/db/schema/index';
 import { createOrUpdateUser } from '$server/services/authService';
 import { db } from '$server/db/index';
 import { faker } from '@faker-js/faker';
 import { env } from '$lib/config/env.server';
 import { logger } from '$server/config';
+import { eq } from 'drizzle-orm';
 
 export const seedData = async () => {
   logger.debug('Seeding data ', {
@@ -58,9 +60,13 @@ const seedDefaultConfig = async () => {
   logger.info('Default config values seeded');
 };
 
-const seedDefaultUser = async () => {
-  await createOrUpdateUser('demo', 'demo');
+const seedDefaultUser = async (): Promise<string | undefined> => {
+  const userId = await createOrUpdateUser('demo', 'demo');
+  if (userId) {
+    await db.update(usersTable).set({ role: 'admin' }).where(eq(usersTable.id, userId));
+  }
   logger.info('Default demo user created!!!');
+  return userId;
 };
 
 function buildDateSeries(count: number, daysBack: number): Date[] {
@@ -96,7 +102,7 @@ export const clearDb = async () => {
 };
 
 const seedDemoData = async (enforce: boolean = false) => {
-  if (!env.DISABLE_AUTH) seedDefaultUser();
+  const demoUserId = !env.DISABLE_AUTH ? await seedDefaultUser() : undefined;
   if (!enforce) {
     const existingVehicles = await db.$count(vehicleTable);
     if (existingVehicles > 0) {
@@ -118,7 +124,8 @@ const seedDemoData = async (enforce: boolean = false) => {
         licensePlate: faker.vehicle.vrm(),
         vin: faker.vehicle.vin(),
         color: faker.color.rgb(),
-        odometer: faker.number.int({ min: 100, max: 500000 })
+        odometer: faker.number.int({ min: 100, max: 500000 }),
+        userId: demoUserId || 'seed'
       },
       {
         make: faker.vehicle.manufacturer(),
@@ -127,7 +134,8 @@ const seedDemoData = async (enforce: boolean = false) => {
         licensePlate: faker.vehicle.vrm(),
         vin: faker.vehicle.vin(),
         color: faker.color.rgb(),
-        odometer: faker.number.int({ min: 100, max: 500000 })
+        odometer: faker.number.int({ min: 100, max: 500000 }),
+        userId: demoUserId || 'seed'
       }
     ])
     .returning();

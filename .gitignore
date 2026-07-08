@@ -4,12 +4,19 @@ node_modules
 # Build outputs
 build/
 .svelte-kit/
+# IDE / Editor
+.vscode/
+.idea/
+.cursor/
 # Logs
 logs
 *.log
 # Database
 *.db
-
+*.db-journal
+# i18n / Paraglide
+src/lib/paraglide
+project.inlang/cache/
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -18,15 +25,8 @@ logs
 .Trashes
 ehthumbs.db
 Thumbs.db
-
+# Misc
 .kiro/
-.vscode/
-temp/
-**/*.db-journal
-
-uploads/
-
-# Paraglide
-src/lib/paraglide
-project.inlang/cache/
 .opencode
+temp/
+uploads/

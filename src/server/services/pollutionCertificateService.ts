@@ -20,7 +20,8 @@ type PollutionCertificatePayload = {
 
 export const addPollutionCertificate = async (
   vehicleId: string,
-  pollutionCertificateData: PollutionCertificatePayload
+  pollutionCertificateData: PollutionCertificatePayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
   const sanitizedPayload = clearFixedEndDate(pollutionCertificateData);
@@ -29,7 +30,8 @@ export const addPollutionCertificate = async (
     .values({
       ...sanitizedPayload,
       vehicleId: vehicleId,
-      id: undefined
+      id: undefined,
+      createdBy: username || undefined
     })
     .returning();
   return createSuccessResponse(
@@ -62,7 +64,8 @@ export const getPollutionCertificateById = async (id: string): Promise<ApiRespon
 export const updatePollutionCertificate = async (
   vehicleId: string,
   id: string,
-  pollutionCertificateData: PollutionCertificatePayload
+  pollutionCertificateData: PollutionCertificatePayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   requireRecord(
     await db.query.pollutionCertificateTable.findFirst({
@@ -74,7 +77,7 @@ export const updatePollutionCertificate = async (
 
   const updatedCertificate = await db
     .update(schema.pollutionCertificateTable)
-    .set(clearFixedEndDate(pollutionCertificateData))
+    .set({ ...clearFixedEndDate(pollutionCertificateData), updatedBy: username || undefined })
     .where(eq(schema.pollutionCertificateTable.id, id))
     .returning();
   return createSuccessResponse(

@@ -59,7 +59,7 @@ export const POST: RequestHandler = async (event) => {
     body.recurrenceType = body.recurrenceType || 'no_end';
     body.recurrenceInterval = body.recurrenceInterval || 1;
 
-    const result = await insuranceService.addInsurance(id, body);
+    const result = await insuranceService.addInsurance(id, body, event.locals.user?.username);
     return json(result, { status: 201 });
   });
 };

@@ -11,3 +11,8 @@ export const timestamps = {
     .$onUpdateFn(() => sql`CURRENT_TIMESTAMP`)
     .notNull()
 };
+
+export const auditUser = {
+  createdBy: t.text(),
+  updatedBy: t.text()
+};

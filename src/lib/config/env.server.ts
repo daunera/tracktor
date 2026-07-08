@@ -51,7 +51,13 @@ export const serverEnv = {
   HTTP_MODE: privateEnv.HTTP_MODE || 'http',
   APP_VERSION: privateEnv.APP_VERSION,
   BASE_URL: privateEnv.BASE_URL || '',
-  APP_SECRET: privateEnv.APP_SECRET || ''
+  APP_SECRET: privateEnv.APP_SECRET || '',
+  GOOGLE_CLIENT_ID: privateEnv.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET || '',
+  SUPERADMIN_EMAILS: privateEnv.SUPERADMIN_EMAILS || '',
+  SUPERADMIN_USERNAMES: privateEnv.SUPERADMIN_USERNAMES || '',
+  DISABLE_PASSWORD_LOGIN: privateEnv.DISABLE_PASSWORD_LOGIN === 'true',
+  DISABLE_GOOGLE_LOGIN: privateEnv.DISABLE_GOOGLE_LOGIN === 'true'
 } as const;
 
 /**

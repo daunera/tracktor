@@ -10,6 +10,7 @@ class VehicleStore {
   openSheet = $state(false);
   editMode = $state(false);
   error = $state<string>();
+  shareRefreshKey = $state(0);
 
   refreshVehicles = () => {
     this.processing = true;

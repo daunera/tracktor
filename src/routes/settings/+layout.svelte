@@ -9,6 +9,8 @@
     await authStore.checkAuthStatus();
     if (!authStore.isLoggedIn) {
       goto('/login', { replaceState: true });
+    } else if (!authStore.isAdmin) {
+      goto('/dashboard', { replaceState: true });
     }
   });
 </script>

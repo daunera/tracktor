@@ -51,7 +51,12 @@ export const PUT: RequestHandler = async (event) => {
       body.recurrenceInterval = 1;
     }
 
-    const result = await pollutionCertificateService.updatePollutionCertificate(id, puccId, body);
+    const result = await pollutionCertificateService.updatePollutionCertificate(
+      id,
+      puccId,
+      body,
+      event.locals.user?.username
+    );
     return json(result);
   });
 };

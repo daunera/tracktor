@@ -5,7 +5,7 @@ import { withRouteErrorHandling } from '$server/utils/route-handler';
 
 export const GET: RequestHandler = async (event) => {
   return withRouteErrorHandling('Vehicles GET error:', async () => {
-    const result = await vehicleService.getAllVehicles();
+    const result = await vehicleService.getAllVehicles(event.locals.user?.id);
     return json(result);
   });
 };
@@ -28,7 +28,11 @@ export const POST: RequestHandler = async (event) => {
       throw error(400, 'Invalid year');
     }
 
-    const result = await vehicleService.addVehicle(body);
+    const userId = event.locals.user?.id;
+    if (!userId) {
+      throw error(401, 'Not authenticated');
+    }
+    const result = await vehicleService.addVehicle(body, userId, event.locals.user?.username);
     return json(result, { status: 201 });
   });
 };
@@ -52,7 +56,7 @@ export const PUT: RequestHandler = async (event) => {
       throw error(400, 'Invalid year');
     }
 
-    const result = await vehicleService.updateVehicle(body.id, body);
+    const result = await vehicleService.updateVehicle(body.id, body, event.locals.user?.username);
     return json(result);
   });
 };

@@ -6,7 +6,13 @@ import { CorsMiddleware } from './cors';
 import { AppError, Status } from '$server/exceptions/AppError';
 import { validateSession, getUsersCount } from '$server/services/authService';
 
-const BYPASS_PATHS = ['/api/auth', '/api/files/', '/api/health', '/api/config/branding'];
+const BYPASS_PATHS = [
+  '/api/auth/register',
+  '/api/auth/google',
+  '/api/auth/google/callback',
+  '/api/health',
+  '/api/config/branding'
+];
 
 export class AuthMiddleware extends BaseMiddleware {
   protected async process(event: RequestEvent): Promise<MiddlewareResult> {
@@ -59,6 +65,29 @@ export class AuthMiddleware extends BaseMiddleware {
         };
       }
 
+      // Check user registration status
+      if (user.status === 'pending') {
+        return {
+          response: this.createAuthErrorResponse(
+            'Your registration is pending approval. Please wait for an administrator to approve your account.',
+            Status.FORBIDDEN,
+            event.request
+          ),
+          continue: false
+        };
+      }
+
+      if (user.status === 'rejected') {
+        return {
+          response: this.createAuthErrorResponse(
+            'Your registration has been rejected by an administrator.',
+            Status.FORBIDDEN,
+            event.request
+          ),
+          continue: false
+        };
+      }
+
       // Add user to locals for use in route handlers
       event.locals.user = user;
       return { continue: true };
@@ -86,6 +115,11 @@ export class AuthMiddleware extends BaseMiddleware {
 
     // Only apply auth for API endpoints
     if (!pathname.startsWith('/api')) {
+      return false;
+    }
+
+    // Exact match for root /api/auth (GET for status, POST for login, DELETE for logout)
+    if (pathname === '/api/auth') {
       return false;
     }
 

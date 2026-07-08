@@ -16,7 +16,8 @@ type MaintenanceLogPayload = {
 
 export const addMaintenanceLog = async (
   vehicleId: string,
-  maintenanceLogData: MaintenanceLogPayload
+  maintenanceLogData: MaintenanceLogPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
 
@@ -25,7 +26,8 @@ export const addMaintenanceLog = async (
     .values({
       ...maintenanceLogData,
       vehicleId: vehicleId,
-      id: undefined
+      id: undefined,
+      createdBy: username || undefined
     })
     .returning();
   return createSuccessResponse(maintenanceLog[0], 'Maintenance log added successfully.');
@@ -52,13 +54,15 @@ export const getMaintenanceLogById = async (id: string): Promise<ApiResponse> =>
 
 export const updateMaintenanceLog = async (
   id: string,
-  maintenanceLogData: MaintenanceLogPayload
+  maintenanceLogData: MaintenanceLogPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await getMaintenanceLogById(id);
   const updatedLog = await db
     .update(schema.maintenanceLogTable)
     .set({
-      ...maintenanceLogData
+      ...maintenanceLogData,
+      updatedBy: username || undefined
     })
     .where(eq(schema.maintenanceLogTable.id, id))
     .returning();

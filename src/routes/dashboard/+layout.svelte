@@ -25,12 +25,25 @@
 
   let isLoading = $state(true);
 
+  const selectedVehicle = $derived(
+    vehicleStore.vehicles?.find((v) => v.id === vehicleStore.selectedId) || null
+  );
+  const isOwner = $derived(
+    selectedVehicle?.userId != null &&
+      authStore.user?.id != null &&
+      selectedVehicle.userId === authStore.user.id
+  );
+
   onMount(async () => {
     configStore.refreshConfigs();
 
     await authStore.checkAuthStatus();
     if (!authStore.isLoggedIn) {
       goto('/login', { replaceState: true });
+      return;
+    }
+    if (authStore.user?.status === 'pending') {
+      goto('/pending', { replaceState: true });
       return;
     }
 
@@ -118,7 +131,7 @@
       <div id="dashboard-details-section" class="mt-8">
         {#if vehicleStore.selectedId}
           <div id="dashboard-vehicle-content" class="space-y-6">
-            <DashboardNav />
+            <DashboardNav {isOwner} />
             <div id="dashboard-vehicle-details" class="lg:bg-secondary rounded-2xl p-0 lg:p-2">
               {@render children()}
             </div>

@@ -83,7 +83,8 @@ const normalizeReminderPayload = (data: ReminderPayload, fallback?: Partial<Remi
 
 export const addReminder = async (
   vehicleId: string,
-  reminderData: ReminderPayload
+  reminderData: ReminderPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
   const payload = normalizeReminderPayload(reminderData);
@@ -92,7 +93,8 @@ export const addReminder = async (
     .values({
       ...payload,
       vehicleId,
-      id: undefined
+      id: undefined,
+      createdBy: username || undefined
     })
     .returning();
 
@@ -124,7 +126,8 @@ export const getReminderById = async (id: string): Promise<ApiResponse> => {
 export const updateReminder = async (
   vehicleId: string,
   id: string,
-  reminderData: ReminderPayload
+  reminderData: ReminderPayload,
+  username?: string | null
 ): Promise<ApiResponse> => {
   const reminder = requireRecord(
     await db.query.reminderTable.findFirst({
@@ -136,7 +139,7 @@ export const updateReminder = async (
   const payload = normalizeReminderPayload(reminderData, reminderRecordToPayload(reminder));
   const [updated] = await db
     .update(schema.reminderTable)
-    .set({ ...payload })
+    .set({ ...payload, updatedBy: username || undefined })
     .where(eq(schema.reminderTable.id, id))
     .returning();
 

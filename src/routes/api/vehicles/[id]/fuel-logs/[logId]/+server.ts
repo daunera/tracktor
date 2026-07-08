@@ -53,7 +53,7 @@ export const PUT: RequestHandler = async (event) => {
       }
     }
 
-    const result = await fuelLogService.updateFuelLog(id, logId, body);
+    const result = await fuelLogService.updateFuelLog(id, logId, body, event.locals.user?.username);
     return json(result);
   });
 };

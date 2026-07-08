@@ -7,7 +7,6 @@
   import { superForm, defaults } from 'sveltekit-superforms';
   import { zod4 } from 'sveltekit-superforms/adapters';
   import { z } from 'zod/v4';
-  import User from '@lucide/svelte/icons/user';
   import Lock from '@lucide/svelte/icons/lock';
   import { sheetStore } from '$stores/sheet.svelte';
   import * as m from '$lib/paraglide/messages';
@@ -16,7 +15,6 @@
 
   const profileSchema = z
     .object({
-      username: z.string().min(3, 'Username must be at least 3 characters'),
       currentPassword: z.string().optional(),
       newPassword: z.string().optional(),
       confirmPassword: z.string().optional()
@@ -63,7 +61,6 @@
       if (f.valid) {
         processing = true;
         const success = await authStore.updateProfile({
-          username: f.data.username,
           currentPassword: f.data.currentPassword || undefined,
           newPassword: f.data.newPassword || undefined
         });
@@ -84,88 +81,74 @@
   });
 
   const { form: formData, enhance } = form;
-
-  $effect(() => {
-    if (authStore.user) {
-      formData.update((d) => ({ ...d, username: authStore.user!.username }));
-    }
-  });
 </script>
 
 <form id="auth-profile-form" use:enhance onsubmit={(e) => e.preventDefault()}>
   <fieldset class="flex flex-col gap-6" disabled={processing}>
-    <Form.Field {form} name="username" class="w-full">
-      <Form.Control>
-        {#snippet children({ props })}
-          <FormLabel description={m.profile_username_desc()}>{m.profile_username()}</FormLabel>
-          <Input {...props} bind:value={$formData.username} icon={User} type="text" />
-        {/snippet}
-      </Form.Control>
-      <Form.FieldErrors />
-    </Form.Field>
+    {#if authStore.passwordLoginEnabled}
+      <div class="border-t pt-4">
+        <p class="text-muted-foreground mb-4 text-sm">
+          {m.profile_password_hint()}
+        </p>
 
-    <div class="border-t pt-4">
-      <p class="text-muted-foreground mb-4 text-sm">
-        {m.profile_password_hint()}
-      </p>
+        <div class="flex flex-col gap-6">
+          <Form.Field {form} name="currentPassword" class="w-full">
+            <Form.Control>
+              {#snippet children({ props })}
+                <FormLabel description={m.profile_current_password_desc()}
+                  >{m.profile_current_password()}</FormLabel
+                >
+                <Input
+                  {...props}
+                  bind:value={$formData.currentPassword}
+                  icon={Lock}
+                  type="password"
+                  autocomplete="current-password"
+                />
+              {/snippet}
+            </Form.Control>
+            <Form.FieldErrors />
+          </Form.Field>
 
-      <div class="flex flex-col gap-6">
-        <Form.Field {form} name="currentPassword" class="w-full">
-          <Form.Control>
-            {#snippet children({ props })}
-              <FormLabel description={m.profile_current_password_desc()}
-                >{m.profile_current_password()}</FormLabel
-              >
-              <Input
-                {...props}
-                bind:value={$formData.currentPassword}
-                icon={Lock}
-                type="password"
-                autocomplete="current-password"
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors />
-        </Form.Field>
+          <Form.Field {form} name="newPassword" class="w-full">
+            <Form.Control>
+              {#snippet children({ props })}
+                <FormLabel description={m.profile_new_password_desc()}
+                  >{m.profile_new_password()}</FormLabel
+                >
+                <Input
+                  {...props}
+                  bind:value={$formData.newPassword}
+                  icon={Lock}
+                  type="password"
+                  autocomplete="new-password"
+                />
+              {/snippet}
+            </Form.Control>
+            <Form.FieldErrors />
+          </Form.Field>
 
-        <Form.Field {form} name="newPassword" class="w-full">
-          <Form.Control>
-            {#snippet children({ props })}
-              <FormLabel description={m.profile_new_password_desc()}
-                >{m.profile_new_password()}</FormLabel
-              >
-              <Input
-                {...props}
-                bind:value={$formData.newPassword}
-                icon={Lock}
-                type="password"
-                autocomplete="new-password"
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors />
-        </Form.Field>
-
-        <Form.Field {form} name="confirmPassword" class="w-full">
-          <Form.Control>
-            {#snippet children({ props })}
-              <FormLabel description={m.profile_confirm_password_desc()}
-                >{m.profile_confirm_password()}</FormLabel
-              >
-              <Input
-                {...props}
-                bind:value={$formData.confirmPassword}
-                icon={Lock}
-                type="password"
-                autocomplete="new-password"
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors />
-        </Form.Field>
+          <Form.Field {form} name="confirmPassword" class="w-full">
+            <Form.Control>
+              {#snippet children({ props })}
+                <FormLabel description={m.profile_confirm_password_desc()}
+                  >{m.profile_confirm_password()}</FormLabel
+                >
+                <Input
+                  {...props}
+                  bind:value={$formData.confirmPassword}
+                  icon={Lock}
+                  type="password"
+                  autocomplete="new-password"
+                />
+              {/snippet}
+            </Form.Control>
+            <Form.FieldErrors />
+          </Form.Field>
+        </div>
       </div>
-    </div>
 
-    <SubmitButton {processing} class="w-full">{m.profile_update_button()}</SubmitButton>
+      <SubmitButton {processing} class="w-full">{m.profile_update_button()}</SubmitButton>
+    {/if}
   </fieldset>
 </form>

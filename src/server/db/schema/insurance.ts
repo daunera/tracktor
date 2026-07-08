@@ -1,7 +1,7 @@
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
 import { vehicleTable } from './vehicle';
-import { timestamps } from './audit';
+import { timestamps, auditUser } from './audit';
 
 export const insuranceTable = table('insurances', {
   id: t
@@ -21,5 +21,6 @@ export const insuranceTable = table('insurances', {
   cost: t.real().notNull(),
   notes: t.text(),
   attachment: t.text(),
-  ...timestamps
+  ...timestamps,
+  ...auditUser
 });

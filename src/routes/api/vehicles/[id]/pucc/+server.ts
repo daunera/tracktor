@@ -58,7 +58,11 @@ export const POST: RequestHandler = async (event) => {
     body.recurrenceType = body.recurrenceType || 'none';
     body.recurrenceInterval = body.recurrenceInterval || 1;
 
-    const result = await pollutionCertificateService.addPollutionCertificate(id, body);
+    const result = await pollutionCertificateService.addPollutionCertificate(
+      id,
+      body,
+      event.locals.user?.username
+    );
     return json(result, { status: 201 });
   });
 };

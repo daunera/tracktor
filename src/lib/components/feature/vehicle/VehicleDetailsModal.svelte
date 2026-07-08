@@ -4,11 +4,13 @@
   import { Separator } from '$ui/separator';
   import IdCard from '@lucide/svelte/icons/id-card';
   import FileText from '@lucide/svelte/icons/file-text';
+  import User from '@lucide/svelte/icons/user';
   import { formatDistance } from '$lib/helper/format.helper';
   import { getFuelTypeLabel } from '$lib/domain/vehicle';
   import type { Vehicle } from '$lib/domain/vehicle';
   import X from '@lucide/svelte/icons/x';
   import * as m from '$lib/paraglide/messages';
+  import { authStore } from '$stores/auth.svelte';
 
   interface Props {
     vehicle: Vehicle;
@@ -25,6 +27,14 @@
     vehicle.fuelType ? getFuelTypeLabel(vehicle.fuelType, m) : getFuelTypeLabel('petrol', m)
   );
   const odometerText = $derived(vehicle.odometer ? formatDistance(vehicle.odometer) : null);
+
+  const ownerLabel = $derived(
+    !vehicle.ownerName && !vehicle.ownerUsername
+      ? null
+      : vehicle.userId && authStore.user?.id === vehicle.userId
+        ? m.vehicle_details_owner_you()
+        : vehicle.ownerName || vehicle.ownerUsername
+  );
 </script>
 
 <Dialog.Root bind:open>
@@ -59,6 +69,14 @@
 
     <!-- Compact summary chips -->
     <div class="flex flex-wrap gap-2 px-5 pt-4">
+      {#if ownerLabel}
+        <span
+          class="border-input bg-background flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"
+        >
+          <User class="h-3 w-3" />
+          {ownerLabel}
+        </span>
+      {/if}
       {#if vehicle.licensePlate}
         <span
           class="border-input bg-background rounded-full border px-3 py-1 text-xs font-semibold"

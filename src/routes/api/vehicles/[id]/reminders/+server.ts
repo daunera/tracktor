@@ -30,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
       throw error(400, 'Due date, type, and remind schedule are required');
     }
 
-    const result = await reminderService.addReminder(id, body);
+    const result = await reminderService.addReminder(id, body, event.locals.user?.username);
     return json(result, { status: 201 });
   });
 };

@@ -9,6 +9,7 @@
   import BellRing from '@lucide/svelte/icons/bell-ring';
   import Info from '@lucide/svelte/icons/info';
   import { vehicleStore } from '$stores/vehicle.svelte';
+  import { authStore } from '$stores/auth.svelte';
   import IconButton from '$appui/IconButton.svelte';
   import DeleteConfirmation from '$appui/DeleteConfirmation.svelte';
   import * as Card from '$ui/card';
@@ -31,6 +32,9 @@
   const { vehicle, onclick, onkeydown, isSelected = false } = $props();
   let deleteDialog = $state(false);
   let detailsModalOpen = $state(false);
+  let isOwner = $derived(
+    vehicle.userId != null && authStore.user?.id != null && vehicle.userId === authStore.user.id
+  );
 
   const performDelete = async (vehicleId: string) => {
     deleteVehicle(vehicleId).then((res) => {
@@ -142,18 +146,22 @@
             }}
             ariaLabel={m.vehicle_action_edit()}
           />
-          <IconButton
-            id="vehicle-card-delete-btn"
-            buttonStyles="hover:bg-gray-200 dark:hover:bg-gray-700"
-            iconStyles="text-gray-600 dark:text-gray-100 hover:text-red-500"
-            icon={Trash2}
-            onclick={() => (deleteDialog = true)}
-            ariaLabel={m.vehicle_action_delete()}
-          />
+          {#if isOwner}
+            <IconButton
+              id="vehicle-card-delete-btn"
+              buttonStyles="hover:bg-gray-200 dark:hover:bg-gray-700"
+              iconStyles="text-gray-600 dark:text-gray-100 hover:text-red-500"
+              icon={Trash2}
+              onclick={() => (deleteDialog = true)}
+              ariaLabel={m.vehicle_action_delete()}
+            />
+          {/if}
         </div>
       </div>
     </Card.Footer>
   </Card.Root>
 </div>
-<DeleteConfirmation onConfirm={() => performDelete(vehicle.id)} bind:open={deleteDialog} />
+{#if isOwner}
+  <DeleteConfirmation onConfirm={() => performDelete(vehicle.id)} bind:open={deleteDialog} />
+{/if}
 <VehicleDetailsModal bind:open={detailsModalOpen} {vehicle} />

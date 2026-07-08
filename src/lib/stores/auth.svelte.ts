@@ -7,6 +7,12 @@ import { toast } from 'svelte-sonner';
 interface User {
   id: string;
   username: string;
+  email?: string | null;
+  name?: string | null;
+  avatarUrl?: string | null;
+  authProvider?: string;
+  status?: string;
+  role?: string;
 }
 
 class AuthStore {
@@ -14,10 +20,18 @@ class AuthStore {
   isLoggedIn = $state<boolean>(false);
   hasUsers = $state<boolean>(false);
   isAuthDisabled = $state<boolean>(env.DISABLE_AUTH);
+  passwordLoginEnabled = $state<boolean>(true);
+  googleLoginEnabled = $state<boolean>(false);
+  blockedReason = $state<string | null>(null);
 
   constructor() {
     this.isLoggedIn = env.DISABLE_AUTH;
     this.hasUsers = env.DISABLE_AUTH;
+  }
+
+  get isAdmin(): boolean {
+    if (this.isAuthDisabled) return true;
+    return this.user?.role === 'admin';
   }
 
   checkAuthStatus = async () => {
@@ -33,10 +47,21 @@ class AuthStore {
       });
       this.isAuthDisabled = !!res.data?.isAuthDisabled;
       this.hasUsers = res.data?.hasUsers ?? false;
+      this.passwordLoginEnabled = res.data?.passwordLoginEnabled !== false;
+      this.googleLoginEnabled = res.data?.googleLoginEnabled === true;
 
       if (this.isAuthDisabled) {
         this.isLoggedIn = true;
         this.hasUsers = true;
+        return;
+      }
+
+      // Detect rejected/blocked status
+      if (res.data?.reason === 'rejected') {
+        this.blockedReason =
+          res.data.message || 'Your account has been blocked by an administrator.';
+        this.user = null;
+        this.isLoggedIn = false;
         return;
       }
 
@@ -55,7 +80,10 @@ class AuthStore {
     }
   };
 
-  login = async (username: string, password: string) => {
+  login = async (
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; errorMessage?: string }> => {
     try {
       const { data: res } = await apiClient.post<ApiResponse>(
         '/auth',
@@ -67,16 +95,20 @@ class AuthStore {
         this.user = res.data.user;
         this.isLoggedIn = true;
         toast.success('Login successful');
-        return true;
+        return { success: true };
       }
-      return false;
+      return { success: false };
     } catch (err: any) {
       this.user = null;
       this.isLoggedIn = false;
       console.error('Login error:', err);
-      toast.error(`Login failed: ${err.response?.data?.message || err.message}`);
-      return false;
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+      return { success: false, errorMessage };
     }
+  };
+
+  googleLogin = () => {
+    window.location.href = '/api/auth/google';
   };
 
   register = async (username: string, password: string) => {
@@ -112,16 +144,11 @@ class AuthStore {
     }
   };
 
-  updateProfile = async (data: {
-    username?: string;
-    currentPassword?: string;
-    newPassword?: string;
-  }) => {
+  updateProfile = async (data: { currentPassword?: string; newPassword?: string }) => {
     try {
       const { data: res } = await apiClient.put<ApiResponse>('/auth/profile', data);
 
-      if (res.success && res.data) {
-        this.user = { ...this.user!, username: res.data.username };
+      if (res.success) {
         toast.success('Profile updated successfully');
         return true;
       }
