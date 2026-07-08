@@ -21,6 +21,10 @@
     })
     .refine(
       (data) => {
+        // Google OAuth users (no passwordHash) can set a password without currentPassword
+        if (authStore.user?.authProvider === 'google') {
+          return true;
+        }
         if (data.newPassword && !data.currentPassword) {
           return false;
         }

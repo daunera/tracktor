@@ -56,7 +56,7 @@ export const PUT: RequestHandler = async (event) => {
       throw error(400, 'Invalid year');
     }
 
-    const result = await vehicleService.updateVehicle(body.id, body, event.locals.user?.username);
+    const result = await vehicleService.updateVehicle(body.id, body, event.locals.user?.username, event.locals.user?.id);
     return json(result);
   });
 };

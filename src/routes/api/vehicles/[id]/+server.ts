@@ -24,7 +24,7 @@ export const DELETE: RequestHandler = async (event) => {
       throw error(400, 'Vehicle ID is required');
     }
 
-    const result = await vehicleService.deleteVehicle(id);
+    const result = await vehicleService.deleteVehicle(id, event.locals.user?.id);
     return json(result);
   });
 };

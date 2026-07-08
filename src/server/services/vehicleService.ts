@@ -154,10 +154,9 @@ export const getAllVehicles = async (userId?: string): Promise<ApiResponse> => {
     .from(schema.vehicleTable)
     .leftJoin(schema.usersTable, eq(schema.vehicleTable.userId, schema.usersTable.id));
 
-  if (accessibleIds) {
-    vehiclesQuery.where(inArray(schema.vehicleTable.id, accessibleIds));
-  }
-  const vehicles = await vehiclesQuery;
+  const vehicles = accessibleIds
+    ? await vehiclesQuery.where(inArray(schema.vehicleTable.id, accessibleIds))
+    : await vehiclesQuery;
 
   const [insurances, pollutionCerts] = await Promise.all([
     db.query.insuranceTable.findMany({
@@ -249,9 +248,19 @@ export const getVehicleById = async (id: string, userId?: string): Promise<ApiRe
 export const updateVehicle = async (
   id: string,
   vehicleData: VehicleMutationPayload,
-  username?: string | null
+  username?: string | null,
+  userId?: string
 ): Promise<ApiResponse> => {
-  await getVehicleById(id); // Validates vehicle exists, no userId needed for basic check
+  // Validate vehicle exists and user has access (owner or editor)
+  if (userId) {
+    const role = await getUserRoleForVehicle(userId, id);
+    if (!role) {
+      throw new AppError('Vehicle not found', Status.NOT_FOUND);
+    }
+    if (role === 'viewer') {
+      throw new AppError('You do not have permission to update this vehicle', Status.FORBIDDEN);
+    }
+  }
 
   const processedData = serializeVehiclePayload(vehicleData);
 
@@ -264,7 +273,13 @@ export const updateVehicle = async (
   return createSuccessResponse(parseVehicleRecord(updatedVehicle), 'Vehicle updated successfully.');
 };
 
-export const deleteVehicle = async (id: string): Promise<ApiResponse> => {
+export const deleteVehicle = async (id: string, userId?: string): Promise<ApiResponse> => {
+  if (userId) {
+    const role = await getUserRoleForVehicle(userId, id);
+    if (role !== 'owner') {
+      throw new AppError('Vehicle not found', Status.NOT_FOUND);
+    }
+  }
   return await performDelete(schema.vehicleTable, id, 'Vehicle');
 };
 
