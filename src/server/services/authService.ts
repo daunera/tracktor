@@ -122,6 +122,9 @@ export const loginUser = async (username: string, password: string): Promise<Api
     );
   }
 
+  // Sync superadmin role on every login
+  const role = await syncSuperadminRole(user);
+
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, user.id);
 
@@ -136,7 +139,7 @@ export const loginUser = async (username: string, password: string): Promise<Api
         avatarUrl: user.avatarUrl,
         authProvider: user.authProvider,
         status: user.status,
-        role: user.role
+        role
       }
     },
     'Login successful'
@@ -228,6 +231,22 @@ export const isSuperadmin = (user: { email?: string | null; username: string }):
       .includes(user.username);
   }
   return false;
+};
+
+export const syncSuperadminRole = async (user: {
+  id: string;
+  role?: string | null;
+  email?: string | null;
+  username: string;
+}): Promise<'admin' | 'user'> => {
+  if (isSuperadmin(user) && user.role !== 'admin') {
+    await db
+      .update(schema.usersTable)
+      .set({ role: 'admin' })
+      .where(eq(schema.usersTable.id, user.id));
+    return 'admin';
+  }
+  return (user.role as 'admin' | 'user') || 'user';
 };
 
 export const getEffectiveRole = (user: {

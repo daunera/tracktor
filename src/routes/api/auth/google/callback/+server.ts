@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
+import { syncSuperadminRole } from '$server/services/authService';
 import { env, isHttps } from '$lib/config/env.server';
 import { db } from '$server/db/index';
 import { usersTable } from '$server/db/schema/index';
@@ -90,6 +91,9 @@ export const GET: RequestHandler = async (event) => {
         email
       })
       .where(eq(usersTable.id, userId));
+
+    // Sync superadmin role on every login
+    await syncSuperadminRole(existingUser);
   } else if (email) {
     // Check if user exists by email (account linking)
     existingUser = await db.query.usersTable.findFirst({
@@ -108,6 +112,9 @@ export const GET: RequestHandler = async (event) => {
           name: existingUser.name || name
         })
         .where(eq(usersTable.id, userId));
+
+      // Sync superadmin role on every login
+      await syncSuperadminRole(existingUser);
     } else {
       // Create new user
       const isSuperadmin = env.SUPERADMIN_EMAILS.split(',')
