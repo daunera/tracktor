@@ -15,7 +15,11 @@
   let username = $state('');
   let password = $state('');
   let processing = $state(false);
-  let loginError = $state<string | null>(initialError);
+  let loginError = $state<string | null>(null);
+
+  $effect(() => {
+    loginError = initialError;
+  });
 
   const handleLogin = async (event: Event) => {
     event.preventDefault();

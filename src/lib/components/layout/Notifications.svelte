@@ -19,7 +19,8 @@
   import {
     clearNotification,
     getNotifications,
-    markAllNotificationsAsRead
+    markAllNotificationsAsRead,
+    markNotificationAsRead
   } from '$services/notification.service';
   import { toast } from 'svelte-sonner';
   import { authStore } from '$lib/stores/auth.svelte';
@@ -114,9 +115,7 @@
       if (isNotificationMarkingAsRead(notification.id)) return;
       setMarkingAsReadLoading(notification.id, true);
       try {
-        const { markNotificationAsRead: markAsReadService } =
-          await import('$services/notification.service');
-        const response = await markAsReadService(vehicleStore.selectedId, notification.id);
+        const response = await markNotificationAsRead(vehicleStore.selectedId, notification.id);
         if (response.status === 'OK') {
           // Update local state
           apiNotifications = apiNotifications.map((n) =>
