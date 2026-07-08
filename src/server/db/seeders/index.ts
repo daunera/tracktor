@@ -102,7 +102,10 @@ export const clearDb = async () => {
 };
 
 const seedDemoData = async (enforce: boolean = false) => {
-  const demoUserId = !env.DISABLE_AUTH ? await seedDefaultUser() : undefined;
+  const demoUserId = await seedDefaultUser();
+  if (!demoUserId) {
+    throw new Error('Failed to create or retrieve the demo user for seed data.');
+  }
   if (!enforce) {
     const existingVehicles = await db.$count(vehicleTable);
     if (existingVehicles > 0) {
@@ -125,7 +128,7 @@ const seedDemoData = async (enforce: boolean = false) => {
         vin: faker.vehicle.vin(),
         color: faker.color.rgb(),
         odometer: faker.number.int({ min: 100, max: 500000 }),
-        userId: demoUserId || 'seed'
+        userId: demoUserId
       },
       {
         make: faker.vehicle.manufacturer(),
@@ -135,7 +138,7 @@ const seedDemoData = async (enforce: boolean = false) => {
         vin: faker.vehicle.vin(),
         color: faker.color.rgb(),
         odometer: faker.number.int({ min: 100, max: 500000 }),
-        userId: demoUserId || 'seed'
+        userId: demoUserId
       }
     ])
     .returning();

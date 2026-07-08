@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
 import * as arctic from 'arctic';
+import { env } from '$lib/config/env.server';
 import { withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/auth/google - Initiate Google OAuth flow
@@ -21,7 +22,7 @@ export const GET: RequestHandler = async (event) => {
     event.cookies.set('google_oauth_state', state, {
       path: '/',
       httpOnly: true,
-      secure: false, // set to true in production with HTTPS
+      secure: env.HTTP_MODE === 'https',
       sameSite: 'lax',
       maxAge: 60 * 10 // 10 minutes
     });
@@ -29,7 +30,7 @@ export const GET: RequestHandler = async (event) => {
     event.cookies.set('google_oauth_code_verifier', codeVerifier, {
       path: '/',
       httpOnly: true,
-      secure: false,
+      secure: env.HTTP_MODE === 'https',
       sameSite: 'lax',
       maxAge: 60 * 10 // 10 minutes
     });
