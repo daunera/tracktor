@@ -28,7 +28,7 @@ declare global {
 // Environment variable types for better type safety
 declare namespace NodeJS {
   interface ProcessEnv {
-    NODE_ENV: 'dev' | 'production' | 'test';
+    NODE_ENV: 'development' | 'production' | 'test';
     SERVER_HOST: string;
     SERVER_PORT: string;
     DB_PATH: string;
@@ -45,9 +45,10 @@ declare namespace NodeJS {
     TRACKTOR_API_BASE_URL?: string;
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_CLIENT_SECRET?: string;
-    SUPERADMIN_EMAILS?: string;
-    DISABLE_PASSWORD_LOGIN?: string;
-    DISABLE_GOOGLE_LOGIN?: string;
+    TRACKTOR_SUPERADMIN_EMAILS?: string;
+    TRACKTOR_SUPERADMIN_USERNAMES?: string;
+    TRACKTOR_DISABLE_PASSWORD_LOGIN?: string;
+    TRACKTOR_DISABLE_GOOGLE_LOGIN?: string;
   }
 }
 

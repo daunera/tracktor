@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
-import { env } from '$lib/config/env.server';
+import { env, isHttps } from '$lib/config/env.server';
 import { db } from '$server/db/index';
 import { usersTable } from '$server/db/schema/index';
 import { eq } from 'drizzle-orm';
@@ -156,7 +156,7 @@ export const GET: RequestHandler = async (event) => {
   event.cookies.set('session', sessionToken, {
     path: '/',
     httpOnly: true,
-    secure: env.HTTP_MODE === 'https',
+    secure: isHttps,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 30 // 30 days
   });

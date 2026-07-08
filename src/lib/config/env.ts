@@ -8,6 +8,8 @@ import { resolve } from '$app/paths';
 export const clientEnv = {
   DEMO_MODE: publicEnv.TRACKTOR_DEMO_MODE === 'true',
   DISABLE_AUTH: publicEnv.TRACKTOR_DISABLE_AUTH === 'true',
+  DISABLE_PASSWORD_LOGIN: publicEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true',
+  DISABLE_GOOGLE_LOGIN: publicEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true',
   BASE_URL: resolve('/')
 } as const;
 

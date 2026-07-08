@@ -8,8 +8,9 @@ import { env as publicEnv } from '$env/dynamic/public';
 export const clientEnv = {
   DEMO_MODE: publicEnv.TRACKTOR_DEMO_MODE === 'true',
   // Allow disabling auth via either the public or private env var so it works in container deployments
-  DISABLE_AUTH:
-    publicEnv.TRACKTOR_DISABLE_AUTH === 'true' || privateEnv.TRACKTOR_DISABLE_AUTH === 'true'
+  DISABLE_AUTH: publicEnv.TRACKTOR_DISABLE_AUTH === 'true' || privateEnv.TRACKTOR_DISABLE_AUTH === 'true',
+  DISABLE_PASSWORD_LOGIN: publicEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true' || privateEnv.TRACKTOR_DISABLE_PASSWORD_LOGIN === 'true',
+  DISABLE_GOOGLE_LOGIN: publicEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true' || privateEnv.TRACKTOR_DISABLE_GOOGLE_LOGIN === 'true'
 } as const;
 
 function getCorsOrigins(origins?: string): string[] {
@@ -25,7 +26,7 @@ function getCorsOrigins(origins?: string): string[] {
 
 function getDBPath(): string | undefined {
   switch (privateEnv.NODE_ENV) {
-    case 'dev':
+    case 'development':
       return './tracktor.dev.db';
     case 'test':
       return './tracktor.test.db';
@@ -48,16 +49,13 @@ export const serverEnv = {
   LOG_REQUESTS: !privateEnv.LOG_REQUESTS || privateEnv.LOG_REQUESTS === 'true',
   LOG_LEVEL: privateEnv.LOG_LEVEL || 'info',
   LOG_DIR: privateEnv.LOG_DIR || './logs',
-  HTTP_MODE: privateEnv.HTTP_MODE || 'http',
   APP_VERSION: privateEnv.APP_VERSION,
   BASE_URL: privateEnv.BASE_URL || '',
   APP_SECRET: privateEnv.APP_SECRET || '',
   GOOGLE_CLIENT_ID: privateEnv.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: privateEnv.GOOGLE_CLIENT_SECRET || '',
-  SUPERADMIN_EMAILS: privateEnv.SUPERADMIN_EMAILS || '',
-  SUPERADMIN_USERNAMES: privateEnv.SUPERADMIN_USERNAMES || '',
-  DISABLE_PASSWORD_LOGIN: privateEnv.DISABLE_PASSWORD_LOGIN === 'true',
-  DISABLE_GOOGLE_LOGIN: privateEnv.DISABLE_GOOGLE_LOGIN === 'true'
+  SUPERADMIN_EMAILS: publicEnv.TRACKTOR_SUPERADMIN_EMAILS || '',
+  SUPERADMIN_USERNAMES: publicEnv.TRACKTOR_SUPERADMIN_USERNAMES || '',
 } as const;
 
 /**
@@ -70,6 +68,9 @@ export const env = {
 } as const;
 
 // Environment helpers
-export const isDevelopment = env.NODE_ENV === 'dev';
+export const isDevelopment = env.NODE_ENV === 'development';
 export const isProduction = env.NODE_ENV === 'production';
 export const isTest = env.NODE_ENV === 'test';
+
+/** Whether the app is served over HTTPS, derived from BASE_URL. */
+export const isHttps = env.BASE_URL.startsWith('https://');

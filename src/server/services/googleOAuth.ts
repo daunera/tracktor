@@ -11,9 +11,12 @@ export function getGoogleProvider(): Google {
       );
     }
 
-    const redirectUri = env.BASE_URL
-      ? `${env.BASE_URL}/api/auth/google/callback`
-      : 'http://localhost:5173/api/auth/google/callback';
+    if (!env.BASE_URL) {
+      throw new Error(
+        'Google OAuth requires BASE_URL to be set. Set BASE_URL in your environment variables.'
+      );
+    }
+    const redirectUri = `${env.BASE_URL}/api/auth/google/callback`;
 
     googleProvider = new Google(env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET, redirectUri);
   }

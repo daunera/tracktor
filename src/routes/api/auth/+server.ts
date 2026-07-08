@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
-import { env } from '$lib/config/env.server';
+import { env, isHttps } from '$lib/config/env.server';
 import { isGoogleLoginEnabled, isPasswordLoginEnabled } from '$server/services/googleOAuth';
 import { withRouteErrorHandling } from '$server/utils/route-handler';
 
@@ -26,7 +26,7 @@ export const POST: RequestHandler = async (event) => {
       event.cookies.set('session', result.data.sessionToken, {
         path: '/',
         httpOnly: true,
-        secure: env.HTTP_MODE === 'https',
+        secure: isHttps,
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 30 // 30 days
       });
@@ -108,7 +108,7 @@ export const DELETE: RequestHandler = async (event) => {
     event.cookies.set('session', '', {
       path: '/',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 0 // Expire immediately
     });
