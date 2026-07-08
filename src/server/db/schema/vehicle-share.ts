@@ -26,6 +26,8 @@ export const vehicleShareTable = table(
     ...timestamps
   },
   (table) => ({
-    vehicleUserUnique: t.uniqueIndex('vehicle_shares_vehicleId_userId_unique').on(table.vehicleId, table.userId)
+    vehicleUserUnique: t
+      .uniqueIndex('vehicle_shares_vehicleId_userId_unique')
+      .on(table.vehicleId, table.userId)
   })
 );
