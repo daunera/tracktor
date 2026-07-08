@@ -45,8 +45,8 @@ declare namespace NodeJS {
     TRACKTOR_API_BASE_URL?: string;
     GOOGLE_CLIENT_ID?: string;
     GOOGLE_CLIENT_SECRET?: string;
-    TRACKTOR_SUPERADMIN_EMAILS?: string;
-    TRACKTOR_SUPERADMIN_USERNAMES?: string;
+    SUPERADMIN_EMAILS?: string;
+    SUPERADMIN_USERNAMES?: string;
     TRACKTOR_DISABLE_PASSWORD_LOGIN?: string;
     TRACKTOR_DISABLE_GOOGLE_LOGIN?: string;
   }
