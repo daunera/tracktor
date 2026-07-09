@@ -81,7 +81,7 @@
   <title>{app_name()}</title>
 </svelte:head>
 
-<ModeWatcher />
+<ModeWatcher defaultMode="system" />
 <Toaster position="bottom-right" richColors expand />
 
 {#if demoMode}

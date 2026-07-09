@@ -19,17 +19,43 @@ export function saveTheme(theme: ThemeName): void {
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
 
-/**
- * Check if dark mode is currently active
- */
-export function isDarkMode(): boolean {
-  if (typeof document === 'undefined') return false;
-  return document.documentElement.classList.contains('dark');
+const THEME_STYLE_ID = 'tracktor-theme-vars';
+
+// CSS variable names that the theme can override (snake_case = CSS var name)
+const THEME_CSS_VARS = ['--primary', '--primary-foreground', '--ring'] as const;
+
+function cssValue(key: string, colors?: Record<string, string | undefined>): string {
+  const camelKey = key.replace(/^--/, '').replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  return colors?.[camelKey] ?? '';
+}
+
+function buildThemeCss(
+  lightColors?: ThemeConfig['colors'],
+  darkColors?: ThemeConfig['darkColors']
+): string {
+  const lines: string[] = [];
+
+  lines.push(':root {');
+  for (const cssVar of THEME_CSS_VARS) {
+    const val = cssValue(cssVar, lightColors);
+    if (val) lines.push(`  ${cssVar}: ${val};`);
+  }
+  lines.push('}');
+
+  lines.push('.dark {');
+  for (const cssVar of THEME_CSS_VARS) {
+    const val = cssValue(cssVar, darkColors);
+    if (val) lines.push(`  ${cssVar}: ${val};`);
+  }
+  lines.push('}');
+
+  return lines.join('\n');
 }
 
 /**
- * Apply theme CSS variables to document
- * Applies different colors based on dark/light mode
+ * Apply theme CSS variables to the document via a <style> element.
+ * Uses both :root and .dark selectors so the CSS cascade correctly
+ * handles dark/light mode switching without inline-style specificity issues.
  */
 export function applyThemeColors(
   lightColors?: ThemeConfig['colors'],
@@ -37,38 +63,35 @@ export function applyThemeColors(
 ): void {
   if (typeof document === 'undefined') return;
 
+  // Remove any previously-set inline styles to avoid specificity conflicts
   const root = document.documentElement;
-  const colors = isDarkMode() ? darkColors || lightColors : lightColors;
+  for (const cssVar of THEME_CSS_VARS) {
+    root.style.removeProperty(cssVar);
+  }
 
-  if (!colors) return;
+  // Inject (or update) a stylesheet block that respects the cascade
+  let styleEl = document.getElementById(THEME_STYLE_ID) as HTMLStyleElement | null;
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = THEME_STYLE_ID;
+    document.head.appendChild(styleEl);
+  }
 
-  // Only apply theme-specific colors (primary, accent, etc.)
-  // Don't override base colors (background, foreground) which are controlled by dark mode
-  const themeColorMap: Record<string, string> = {
-    primary: '--primary',
-    primaryForeground: '--primary-foreground',
-    ring: '--ring'
-  };
-
-  Object.entries(colors).forEach(([key, value]) => {
-    if (value && key in themeColorMap) {
-      const cssVar = themeColorMap[key];
-      root.style.setProperty(cssVar, value);
-    }
-  });
+  styleEl.textContent = buildThemeCss(lightColors, darkColors);
 }
 
 /**
- * Reset theme to default (remove all custom theme variables)
+ * Reset theme to default (remove injected stylesheet)
  */
 export function resetThemeColors(): void {
   if (typeof document === 'undefined') return;
-  const root = document.documentElement;
-  const customProps = ['primary', 'primary-foreground', 'ring'];
+  const styleEl = document.getElementById(THEME_STYLE_ID);
+  if (styleEl) styleEl.remove();
 
-  customProps.forEach((prop) => {
-    root.style.removeProperty(`--${prop}`);
-  });
+  const root = document.documentElement;
+  for (const cssVar of THEME_CSS_VARS) {
+    root.style.removeProperty(cssVar);
+  }
 }
 
 /**
