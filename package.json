@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.4.1",
   "type": "module",
+  "pnpm": {
+    "minimumReleaseAge": 0
+  },
   "scripts": {
     "dev": "vite dev --host",
     "build": "vite build",
