@@ -212,17 +212,18 @@ flowchart LR
      -H 'accept: application/json' \
      -H 'x-api-key: YOUR_API_TOKEN'
    ```
+
    - Find your compose service in the response and copy its `composeId`
 
 ### GitHub Secrets Setup
 
 Add the following secrets to your GitHub repository at `Settings > Secrets and variables > Actions`:
 
-| Secret Name | Value |
-|---|---|
-| `DOKPLOY_API_URL` | Your Dokploy base URL (e.g., `https://dokploy.yourdomain.com`) |
-| `DOKPLOY_API_TOKEN` | The API token generated in Dokploy |
-| `DOKPLOY_COMPOSE_ID` | The compose service ID found in the API response |
+| Secret Name          | Value                                                          |
+| -------------------- | -------------------------------------------------------------- |
+| `DOKPLOY_API_URL`    | Your Dokploy base URL (e.g., `https://dokploy.yourdomain.com`) |
+| `DOKPLOY_API_TOKEN`  | The API token generated in Dokploy                             |
+| `DOKPLOY_COMPOSE_ID` | The compose service ID found in the API response               |
 
 ### Uninstalling
 

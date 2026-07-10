@@ -802,5 +802,7 @@
   "share_error_operation": "Művelet sikertelen",
   "common_cron_expression": "Cron kifejezés",
   "common_uploaded": "Feltöltve",
-  "common_close": "Bezárás"
+  "common_close": "Bezárás",
+  "og_description": "Kezeld és kövesd a járműveidet egyszerűen: Tankolás, karbantartás, KGFB és még sok más.",
+  "og_title": "Tracktor ⋅ A háztáji járműkövető alkalmazás"
 }
