@@ -165,8 +165,8 @@
   const gasUnitOptions = [
     { value: 'liter', label: m.common_litre() },
     { value: 'gallon', label: m.common_gallon() },
-    { value: 'kilogram', label: 'Kilogram (kg)' },
-    { value: 'pound', label: 'Pound (lb)' }
+    { value: 'kilogram', label: m.common_kilogram_unit() },
+    { value: 'pound', label: m.common_pound_unit() }
   ];
 
   const mileageUnitFormatOptions = [
@@ -242,7 +242,7 @@
       <Dialog.Close onclick={() => sheetStore.closeSheet()}>
         <Button variant="ghost" size="icon" class="h-6 w-6">
           <XIcon class="h-4 w-4" />
-          <span class="sr-only">Close</span>
+          <span class="sr-only">{m.common_close()}</span>
         </Button>
       </Dialog.Close>
     </div>

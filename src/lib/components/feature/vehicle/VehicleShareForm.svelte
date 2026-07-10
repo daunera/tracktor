@@ -56,10 +56,10 @@
         vehicleStore.shareRefreshKey++;
         sheetStore.closeSheet();
       } else {
-        toast.error(res.message || 'Failed to share vehicle');
+        toast.error(res.message || m.share_error_share());
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Operation failed');
+      toast.error(err.response?.data?.message || err.message || m.share_error_operation());
     } finally {
       processing = false;
     }
@@ -82,7 +82,7 @@
             selectedUserLabel = '';
           }}
         >
-          Change
+          {m.share_change()}
         </button>
       </div>
     {:else}
@@ -95,7 +95,7 @@
         class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
       />
       {#if searching}
-        <p class="text-muted-foreground text-sm">Searching...</p>
+        <p class="text-muted-foreground text-sm">{m.share_searching()}</p>
       {:else if searchResults.length > 0}
         <div class="border-border max-h-48 overflow-y-auto rounded-lg border">
           {#each searchResults as result (result.id)}
@@ -119,7 +119,7 @@
           {/each}
         </div>
       {:else if searchQuery.length >= 2}
-        <p class="text-muted-foreground text-sm">No users found.</p>
+        <p class="text-muted-foreground text-sm">{m.share_no_users()}</p>
       {/if}
     {/if}
   </div>

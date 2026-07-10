@@ -61,10 +61,10 @@
       if (res.success && Array.isArray(res.data)) {
         shares = res.data as VehicleShareWithUser[];
       } else {
-        error = res.message || 'Failed to load shares';
+        error = res.message || m.share_error_load();
       }
     } catch (err: any) {
-      error = err.message || 'Failed to load shares';
+      error = err.message || m.share_error_load();
     } finally {
       loading = false;
     }
@@ -83,10 +83,10 @@
         toast.success(m.share_toast_removed());
         vehicleStore.shareRefreshKey++;
       } else {
-        toast.error(res.message || 'Failed to remove share');
+        toast.error(res.message || m.share_error_remove());
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to remove share');
+      toast.error(err.response?.data?.message || err.message || m.share_error_remove());
     } finally {
       showDeleteDialog = false;
       shareToRemove = null;
@@ -109,10 +109,10 @@
         vehicleStore.shareRefreshKey++;
         vehicleStore.refreshVehicles();
       } else {
-        toast.error(res.message || 'Failed to transfer ownership');
+        toast.error(res.message || m.share_error_transfer());
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to transfer ownership');
+      toast.error(err.response?.data?.message || err.message || m.share_error_transfer());
     } finally {
       showTransferDialog = false;
       transferTarget = null;

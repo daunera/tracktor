@@ -58,7 +58,7 @@
             class="border-input bg-background hover:bg-accent hover:text-accent-foreground flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-300"
           >
             <LogIn class="h-5 w-5" />
-            Sign up with Google
+            {m.auth_google_signup()}
           </button>
         </Field>
       {/if}
@@ -70,7 +70,7 @@
               <span class="w-full border-t"></span>
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-              <span class="bg-background text-muted-foreground px-2">or</span>
+              <span class="bg-background text-muted-foreground px-2">{m.auth_or()}</span>
             </div>
           </div>
         {/if}
@@ -121,7 +121,7 @@
 
       {#if !hasAnyLoginMethod}
         <p class="text-muted-foreground text-center text-sm">
-          No registration methods are currently enabled. Please contact the system administrator.
+          {m.auth_no_register_methods()}
         </p>
       {/if}
     </FieldGroup>
