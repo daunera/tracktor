@@ -163,42 +163,66 @@ docker stop tracktor-app && docker rm tracktor-app
 docker volume rm tracktor-data
 ```
 
-## Dokploy (GitHub-Connected Compose)
+## Dokploy
 
-Dokploy can automatically deploy Tracktor whenever code is pushed to the repository.
+Dokploy can automatically deploy Tracktor whenever a new Docker image is pushed to the registry.
+
+### How It Works
+
+Deployments are triggered from the CI/CD pipeline, not by repository push events. This ensures the new image is already available in the registry before Dokploy attempts to pull it.
+
+```mermaid
+flowchart LR
+    A["Push to dev"] --> B["GitHub Actions: build & push image"]
+    B --> C{"Build success?"}
+    C -->|"yes"| D["Trigger Dokploy deploy API"]
+    D --> E["Dokploy clones repo"]
+    E --> F["docker compose up -d --pull=always"]
+    F --> G["Container redeployed with new image"]
+    C -->|"no"| H["No deploy"]
+```
 
 ### Prerequisites
 
 - A Dokploy server with the ability to connect to GitHub repositories
 
-### Steps
+### Dokploy Setup
 
-1. Ensure `docker-compose.yml` exists in the repository root (it does in this repo).
-
-2. In Dokploy, create a new **Compose** service:
+1. Create a new **Compose** service:
    - Set the source type to **GitHub**
    - Connect the repository
    - Point to the `docker-compose.yml` file in the repository root
    - Set the branch to `dev` (or `main`)
-   - Enable **Auto Deploy**
+   - **Disable Auto Deploy** (deployment is triggered from CI instead)
 
-3. Set the image to use via the `TRACKTOR_IMAGE` environment variable in Dokploy (either through Dokploy's environment variables UI or an `.env` file in the repository):
-   - Example: `TRACKTOR_IMAGE=ghcr.io/javedh-dev/tracktor:dev`
+2. Configure the `TRACKTOR_IMAGE` environment variable:
+   - Set `TRACKTOR_IMAGE=ghcr.io/javedh-dev/tracktor:dev` (or your own image tag)
    - This variable is required and must be set
-   - Use a specific version tag for production
 
-4. Configure any other environment variables in Dokploy. Refer to `.env.example` for all available options.
+3. Configure any other environment variables. Refer to `.env.example` for all available options.
 
-5. Save the service. Dokploy will clone the repository, read the compose file, pull the latest image, and deploy the container.
+4. Generate an **API Token**:
+   - Go to your **Profile / Settings** in Dokploy
+   - Generate a new API token and copy it
 
-### How Auto-Deploy Works
+5. Find the **Compose Service ID**:
+   - Run the following command (replace the URL and token):
+   ```bash
+   curl -X GET 'https://YOUR_DOKPLOY_DOMAIN/api/project.all' \
+     -H 'accept: application/json' \
+     -H 'x-api-key: YOUR_API_TOKEN'
+   ```
+   - Find your compose service in the response and copy its `composeId`
 
-- You push code to the configured branch
-- GitHub Actions builds and pushes a new image to the configured `TRACKTOR_IMAGE` tag
-- GitHub sends a webhook to Dokploy
-- Dokploy pulls the latest commit and runs `docker compose up -d`
-- Docker pulls the latest image (due to `pull_policy: always`) and redeploys the container
-- The `tracktor-data` volume persists data across redeploys
+### GitHub Secrets Setup
+
+Add the following secrets to your GitHub repository at `Settings > Secrets and variables > Actions`:
+
+| Secret Name | Value |
+|---|---|
+| `DOKPLOY_API_URL` | Your Dokploy base URL (e.g., `https://dokploy.yourdomain.com`) |
+| `DOKPLOY_API_TOKEN` | The API token generated in Dokploy |
+| `DOKPLOY_COMPOSE_ID` | The compose service ID found in the API response |
 
 ### Uninstalling
 
