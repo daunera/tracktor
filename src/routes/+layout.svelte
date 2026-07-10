@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LayoutProps } from './$types';
-  import { locales, localizeHref } from '$lib/paraglide/runtime';
+  import { locales, localizeHref, getLocale } from '$lib/paraglide/runtime';
   import { ModeWatcher } from 'mode-watcher';
   import '../styles/app.css';
   import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
@@ -30,6 +30,7 @@
   let showGlobalLoader = $derived(
     navigating.to && !navigating.to.route.id?.includes('(auth)') && !isDashboardTransition
   );
+  const ogImageUrl = $derived(`${data.baseUrl}/og/og-image-${getLocale()}.jpg`);
 
   async function detectSWUpdate() {
     const registrations = await navigator?.serviceWorker?.ready;
@@ -82,13 +83,13 @@
   <meta name="robots" content="noindex, nofollow" />
   <meta property="og:title" content={og_title()} />
   <meta property="og:description" content={og_description()} />
-  <meta property="og:image" content="https://tracktor.dauner.hu/og-image.png" />
-  <meta property="og:url" content={`https://tracktor.dauner.hu${page.url.pathname}`} />
+  <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:url" content={`${data.baseUrl}${page.url.pathname}`} />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={og_title()} />
   <meta name="twitter:description" content={og_description()} />
-  <meta name="twitter:image" content="https://tracktor.dauner.hu/og-image.png" />
+  <meta name="twitter:image" content={ogImageUrl} />
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
