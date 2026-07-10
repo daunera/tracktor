@@ -1,6 +1,41 @@
 import FileDropZone from './file-drop-zone.svelte';
 import { type FileRejectedReason, type FileDropZoneProps } from './types';
 
+/**
+ * Parse a human-readable size string (e.g. "10M", "512Kb", "1G", "Infinity")
+ * into a number of bytes. Returns `Infinity` for `"Infinity"` (case-insensitive).
+ * Supports K/Kb (kilobytes), M/Mb (megabytes), G/Gb (gigabytes) suffixes.
+ * A bare number is treated as bytes.
+ */
+export const parseSize = (value: string): number => {
+  const trimmed = value.trim();
+  if (trimmed.toLowerCase() === 'infinity') return Infinity;
+
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(Kb?|Mb?|Gb?)?$/i);
+  if (!match) {
+    // Fallback: try parsing as raw bytes
+    const raw = Number(trimmed);
+    return Number.isFinite(raw) ? raw : 10 * MEGABYTE;
+  }
+
+  const number = parseFloat(match[1]);
+  const suffix = (match[2] || '').toLowerCase();
+
+  switch (suffix) {
+    case 'k':
+    case 'kb':
+      return number * KILOBYTE;
+    case 'm':
+    case 'mb':
+      return number * MEGABYTE;
+    case 'g':
+    case 'gb':
+      return number * GIGABYTE;
+    default:
+      return number;
+  }
+};
+
 export const displaySize = (bytes: number): string => {
   if (bytes < KILOBYTE) return `${bytes.toFixed(0)} B`;
 

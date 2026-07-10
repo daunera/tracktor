@@ -9,6 +9,7 @@
   import { displaySize, MEGABYTE } from '$lib/components/ui/file-drop-zone';
   import { useId } from 'bits-ui';
   import { toast } from 'svelte-sonner';
+  import { page } from '$app/stores';
   import Upload from '@lucide/svelte/icons/upload';
   import X from '@lucide/svelte/icons/x';
   import FileText from '@lucide/svelte/icons/file-text';
@@ -42,7 +43,7 @@
     existingImageUrl,
     removeExisting = $bindable(),
     accept = 'image/*,.pdf',
-    maxFileSize = 10 * MEGABYTE, // 10MB default
+    maxFileSize = undefined as number | undefined,
     placeholder,
     onFileSelect,
     showPreview = true,
@@ -67,6 +68,8 @@
           ? m.dropzone_placeholder_attachment()
           : m.dropzone_placeholder_default())
   );
+
+  const effectiveMaxFileSize = $derived(maxFileSize ?? $page.data.maxFileSize ?? 10 * MEGABYTE);
 
   $effect(() => {
     if (file) {
@@ -136,8 +139,8 @@
 
   const shouldAcceptFile = (file: File): boolean => {
     // Check file size
-    if (maxFileSize && file.size > maxFileSize) {
-      toast.error(m.dropzone_error_file_size({ size: displaySize(maxFileSize) }));
+    if (effectiveMaxFileSize && file.size > effectiveMaxFileSize) {
+      toast.error(m.dropzone_error_file_size({ size: displaySize(effectiveMaxFileSize) }));
       return false;
     }
 
@@ -316,7 +319,7 @@
             <span id="file-drop-zone-details" class="text-muted-foreground/75 truncate text-xs">
               {m.dropzone_hint_accept_limit({
                 types: accept.replace(/,/g, ', '),
-                size: displaySize(maxFileSize)
+                size: displaySize(effectiveMaxFileSize)
               })}
             </span>
           </div>
@@ -340,11 +343,9 @@
               <p id="file-accepted-types" class="text-muted-foreground truncate text-xs">
                 {m.dropzone_supports({ types: accept.replace(/,/g, ', ') })}
               </p>
-              {#if maxFileSize}
-                <p id="file-max-size" class="text-muted-foreground text-xs">
-                  {m.dropzone_max_size({ size: displaySize(maxFileSize) })}
-                </p>
-              {/if}
+              <p id="file-max-size" class="text-muted-foreground text-xs">
+                {m.dropzone_max_size({ size: displaySize(effectiveMaxFileSize) })}
+              </p>
             {/if}
           {/if}
         </div>

@@ -1,5 +1,6 @@
 import { env as privateEnv } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
+import { MEGABYTE, parseSize } from '$ui/file-drop-zone';
 
 /**
  * Client-side environment configuration
@@ -49,6 +50,9 @@ export const serverEnv = {
   NODE_ENV: privateEnv.NODE_ENV || 'dev',
   DB_PATH: privateEnv.DB_PATH || getDBPath(),
   UPLOADS_DIR: privateEnv.UPLOADS_DIR || './uploads',
+  BODY_SIZE_LIMIT: privateEnv.BODY_SIZE_LIMIT
+    ? parseSize(privateEnv.BODY_SIZE_LIMIT)
+    : 10 * MEGABYTE,
   CORS_ORIGINS: getCorsOrigins(privateEnv.CORS_ORIGINS),
   FORCE_DATA_SEED: privateEnv.FORCE_DATA_SEED === 'true',
   LOG_REQUESTS: !privateEnv.LOG_REQUESTS || privateEnv.LOG_REQUESTS === 'true',
