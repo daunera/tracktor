@@ -60,11 +60,17 @@ jobs:
           platforms: linux/amd64
 
       - name: Trigger Dokploy deploy
-        if: success() && env.DOKPLOY_DEPLOY_WEBHOOK != ''
+        if: success() && env.DOKPLOY_API_URL != ''
         env:
-          DOKPLOY_DEPLOY_WEBHOOK: ${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}
+          DOKPLOY_API_URL: ${{ secrets.DOKPLOY_API_URL }}
+          DOKPLOY_API_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
         run: |
-          curl -X POST "${{ env.DOKPLOY_DEPLOY_WEBHOOK }}"
+          curl -X POST "${{ env.DOKPLOY_API_URL }}/api/trpc/compose.deploy" \
+            -H 'accept: application/json' \
+            -H 'Content-Type: application/json' \
+            -H "x-api-key: ${{ env.DOKPLOY_API_TOKEN }}" \
+            -d "{\"composeId\": \"${{ env.DOKPLOY_COMPOSE_ID }}\"}"
 
   # Build versioned releases (amd64 + arm64)
   build-and-push-release:
