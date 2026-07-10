@@ -11,6 +11,7 @@
   import Ban from '@lucide/svelte/icons/ban';
   import ArrowUp from '@lucide/svelte/icons/arrow-up-from-line';
   import ArrowDown from '@lucide/svelte/icons/arrow-down-from-line';
+  import * as m from '$lib/paraglide/messages';
 
   interface UserRecord {
     id: string;
@@ -47,7 +48,7 @@
       }
     } catch (err: any) {
       console.error('Error loading users:', err);
-      error = err.response?.data?.message || err.message || 'Failed to load users';
+      error = err.response?.data?.message || err.message || m.settings_users_error_load();
     } finally {
       loading = false;
     }
@@ -62,15 +63,15 @@
       if (res.success) {
         toast.success(
           action === 'approve'
-            ? 'User approved'
+            ? m.settings_users_toast_approved()
             : action === 'reject'
-              ? 'User rejected'
-              : 'User unblocked'
+              ? m.settings_users_toast_rejected()
+              : m.settings_users_toast_unblocked()
         );
         await loadUsers();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Action failed');
+      toast.error(err.response?.data?.message || err.message || m.settings_users_error_action());
     }
   };
 
@@ -81,11 +82,13 @@
         role: newRole
       });
       if (res.success) {
-        toast.success(res.message || 'Role changed successfully');
+        toast.success(res.message || m.settings_users_toast_role_changed());
         await loadUsers();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to change role');
+      toast.error(
+        err.response?.data?.message || err.message || m.settings_users_error_role_change()
+      );
     }
   };
 
@@ -104,8 +107,8 @@
 
 <div id="users-tab" class="h-full w-full">
   <div class="mb-4 flex flex-wrap items-center gap-3">
-    <span class="text-sm font-medium">Status filter:</span>
-    {#each [{ value: '', label: 'All users' }, { value: 'pending', label: 'Pending' }, { value: 'active', label: 'Active' }, { value: 'rejected', label: 'Rejected' }] as filter}
+    <span class="text-sm font-medium">{m.settings_users_status_filter()}</span>
+    {#each [{ value: '', label: m.settings_users_filter_all() }, { value: 'pending', label: m.settings_users_filter_pending() }, { value: 'active', label: m.settings_users_filter_active() }, { value: 'rejected', label: m.settings_users_filter_rejected() }] as filter}
       <button
         type="button"
         onclick={() => {
@@ -120,32 +123,38 @@
         {filter.label}
       </button>
     {/each}
-    <Button variant="outline" size="sm" onclick={loadUsers} class="ml-auto">Refresh</Button>
+    <Button variant="outline" size="sm" onclick={loadUsers} class="ml-auto"
+      >{m.settings_users_refresh()}</Button
+    >
   </div>
 
   {#if loading}
-    <p class="text-muted-foreground py-8 text-center">Loading users...</p>
+    <p class="text-muted-foreground py-8 text-center">{m.settings_users_loading()}</p>
   {:else if error}
     <div class="bg-destructive/10 border-destructive/50 rounded-lg border p-4">
       <p class="text-destructive text-sm">{error}</p>
     </div>
   {:else if users.length === 0}
     <p class="text-muted-foreground py-8 text-center">
-      {statusFilter ? `No ${statusFilter} users found.` : 'No users found.'}
+      {statusFilter
+        ? m.settings_users_no_filtered({ status: statusFilter })
+        : m.settings_users_no_users()}
     </p>
   {:else}
     <div class="border-border overflow-x-auto rounded-lg border">
       <table class="w-full text-sm">
         <thead>
           <tr class="bg-muted/50">
-            <th class="px-4 py-3 text-left font-medium">Username</th>
-            <th class="px-4 py-3 text-left font-medium">Name</th>
-            <th class="px-4 py-3 text-left font-medium">Email</th>
-            <th class="px-4 py-3 text-left font-medium">Role</th>
-            <th class="px-4 py-3 text-left font-medium">Provider</th>
-            <th class="px-4 py-3 text-left font-medium">Status</th>
-            <th class="hidden px-4 py-3 text-left font-medium sm:table-cell">Registered</th>
-            <th class="px-4 py-3 text-right font-medium">Actions</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_username()}</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_name()}</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_email()}</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_role()}</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_provider()}</th>
+            <th class="px-4 py-3 text-left font-medium">{m.settings_users_col_status()}</th>
+            <th class="hidden px-4 py-3 text-left font-medium sm:table-cell"
+              >{m.settings_users_col_registered()}</th
+            >
+            <th class="px-4 py-3 text-right font-medium">{m.settings_users_col_actions()}</th>
           </tr>
         </thead>
         <tbody>
@@ -197,20 +206,22 @@
                       size="sm"
                       variant="default"
                       onclick={() => handleAction(user.id, 'approve')}
-                      title="Approve"
+                      title={m.settings_users_action_approve()}
                     >
                       <Check class="h-4 w-4" />
-                      <span class="hidden sm:inline">Approve</span>
+                      <span class="hidden sm:inline">{m.settings_users_action_approve()}</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       disabled={!canBlock(user)}
                       onclick={() => handleAction(user.id, 'reject')}
-                      title={canBlock(user) ? 'Reject' : 'Cannot reject yourself or a superadmin'}
+                      title={canBlock(user)
+                        ? m.settings_users_action_reject()
+                        : m.settings_users_cannot_reject()}
                     >
                       <X class="h-4 w-4" />
-                      <span class="hidden sm:inline">Reject</span>
+                      <span class="hidden sm:inline">{m.settings_users_action_reject()}</span>
                     </Button>
                   {:else if user.status === 'active'}
                     {#if user.role === 'admin'}
@@ -219,10 +230,10 @@
                           size="sm"
                           variant="outline"
                           onclick={() => handleRoleChange(user.id, 'user')}
-                          title="Demote to user"
+                          title={m.settings_users_action_demote()}
                         >
                           <ArrowDown class="h-4 w-4" />
-                          <span class="hidden sm:inline">Demote</span>
+                          <span class="hidden sm:inline">{m.settings_users_action_demote()}</span>
                         </Button>
                       {/if}
                     {:else if canChangeRole(user)}
@@ -230,10 +241,10 @@
                         size="sm"
                         variant="outline"
                         onclick={() => handleRoleChange(user.id, 'admin')}
-                        title="Promote to admin"
+                        title={m.settings_users_action_promote()}
                       >
                         <ArrowUp class="h-4 w-4" />
-                        <span class="hidden sm:inline">Promote</span>
+                        <span class="hidden sm:inline">{m.settings_users_action_promote()}</span>
                       </Button>
                     {/if}
                     <Button
@@ -241,10 +252,12 @@
                       variant="destructive"
                       disabled={!canBlock(user)}
                       onclick={() => handleAction(user.id, 'reject')}
-                      title={canBlock(user) ? 'Block' : 'Cannot block yourself or a superadmin'}
+                      title={canBlock(user)
+                        ? m.settings_users_action_block()
+                        : m.settings_users_cannot_block()}
                     >
                       <Ban class="h-4 w-4" />
-                      <span class="hidden sm:inline">Block</span>
+                      <span class="hidden sm:inline">{m.settings_users_action_block()}</span>
                     </Button>
                   {:else if user.status === 'rejected'}
                     <Button
@@ -252,10 +265,12 @@
                       variant="outline"
                       disabled={!canBlock(user)}
                       onclick={() => handleAction(user.id, 'unblock')}
-                      title={canBlock(user) ? 'Unblock' : 'Cannot unblock yourself or a superadmin'}
+                      title={canBlock(user)
+                        ? m.settings_users_action_unblock()
+                        : m.settings_users_cannot_unblock()}
                     >
                       <Shield class="h-4 w-4" />
-                      <span class="hidden sm:inline">Unblock</span>
+                      <span class="hidden sm:inline">{m.settings_users_action_unblock()}</span>
                     </Button>
                   {/if}
                 </div>

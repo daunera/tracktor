@@ -127,7 +127,7 @@
         {placeholder}
         {disabled}
         class="mono font-mono"
-        aria-label="Cron expression"
+        aria-label={m.common_cron_expression()}
       />
     </div>
   </div>

@@ -31,7 +31,7 @@
         return true;
       },
       {
-        message: 'Current password is required to change password',
+        message: m.profile_zod_current_password_required(),
         path: ['currentPassword']
       }
     )
@@ -43,7 +43,7 @@
         return true;
       },
       {
-        message: 'New password must be at least 6 characters',
+        message: m.profile_zod_new_password_min(),
         path: ['newPassword']
       }
     )
@@ -54,7 +54,7 @@
         }
         return true;
       },
-      { message: 'Passwords do not match', path: ['confirmPassword'] }
+      { message: m.profile_zod_passwords_mismatch(), path: ['confirmPassword'] }
     );
 
   const form = superForm(defaults(zod4(profileSchema)), {

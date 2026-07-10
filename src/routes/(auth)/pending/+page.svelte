@@ -5,6 +5,7 @@
   import { authStore } from '$stores/auth.svelte';
   import Clock from '@lucide/svelte/icons/clock';
   import { Button } from '$lib/components/ui/button/index.js';
+  import * as m from '$lib/paraglide/messages';
 
   let email = $derived($page.url.searchParams.get('email') || '');
   let checking = $state(false);
@@ -37,20 +38,20 @@
 
 <div class="flex flex-col items-center gap-6 py-8 text-center">
   <Clock class="text-primary h-12 w-12" />
-  <h1 class="text-2xl font-semibold">Registration Pending Approval</h1>
+  <h1 class="text-2xl font-semibold">{m.pending_title()}</h1>
   <p class="text-muted-foreground max-w-md">
-    Your registration is pending approval from an administrator.
+    {m.pending_description()}
     {#if email}
-      A notification will be sent to <strong>{email}</strong> once your account has been activated.
+      {m.pending_email_hint({ email })}
     {/if}
   </p>
   <p class="text-muted-foreground text-sm">
-    If you believe this is an error, please contact the system administrator.
+    {m.pending_error_hint()}
   </p>
   <div class="flex gap-3">
     <Button variant="default" onclick={checkStatus} disabled={checking}>
-      {checking ? 'Checking...' : 'Check Status'}
+      {checking ? m.pending_checking() : m.pending_check_status()}
     </Button>
-    <Button variant="outline" onclick={() => goto('/login')}>Back to Login</Button>
+    <Button variant="outline" onclick={() => goto('/login')}>{m.pending_back_to_login()}</Button>
   </div>
 </div>
