@@ -236,7 +236,7 @@
         id="file-preview-image"
         class="file-preview border-border relative h-48 w-full overflow-hidden rounded-lg border-2 border-dashed"
       >
-        <img src={previewSrc} alt="Uploaded" class="h-full w-full object-cover" />
+        <img src={previewSrc} alt={m.common_uploaded()} class="h-full w-full object-cover" />
         <button
           type="button"
           id="file-preview-remove-btn"
