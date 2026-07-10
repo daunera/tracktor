@@ -16,7 +16,13 @@
   import { configStore } from '$lib/stores/config.svelte';
   import { themeStore } from '$lib/stores/theme.svelte';
   import { authStore } from '$lib/stores/auth.svelte';
-  import { demo_banner, default_login, app_name, og_title, og_description } from '$lib/paraglide/messages/_index.js';
+  import {
+    demo_banner,
+    default_login,
+    app_name,
+    og_title,
+    og_description
+  } from '$lib/paraglide/messages/_index.js';
   import { app_new_update_available } from '$lib/paraglide/messages';
 
   let { children, data }: LayoutProps = $props();
