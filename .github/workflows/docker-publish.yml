@@ -67,10 +67,9 @@ jobs:
           DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
         run: |
           curl -X POST "$DOKPLOY_API_URL/api/trpc/compose.deploy" \
-            -H 'accept: application/json' \
             -H 'Content-Type: application/json' \
             -H "x-api-key: $DOKPLOY_API_TOKEN" \
-            -d "$(printf '{"composeId":"%s"}' "$DOKPLOY_COMPOSE_ID")"
+            -d "{\"json\":{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}}"
 
   # Build versioned releases (amd64 + arm64)
   build-and-push-release:
