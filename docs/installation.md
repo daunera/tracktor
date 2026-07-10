@@ -163,6 +163,48 @@ docker stop tracktor-app && docker rm tracktor-app
 docker volume rm tracktor-data
 ```
 
+## Dokploy (GitHub-Connected Compose)
+
+Dokploy can automatically deploy Tracktor whenever code is pushed to the repository.
+
+### Prerequisites
+
+- A Dokploy server with the ability to connect to GitHub repositories
+
+### Steps
+
+1. Ensure `docker-compose.yml` exists in the repository root (it does in this repo).
+
+2. In Dokploy, create a new **Compose** service:
+   - Set the source type to **GitHub**
+   - Connect the repository
+   - Point to the `docker-compose.yml` file in the repository root
+   - Set the branch to `dev` (or `main`)
+   - Enable **Auto Deploy**
+
+3. Set the image to use via the `TRACKTOR_IMAGE` environment variable in Dokploy (either through Dokploy's environment variables UI or an `.env` file in the repository):
+   - Example: `TRACKTOR_IMAGE=ghcr.io/javedh-dev/tracktor:dev`
+   - This variable is required and must be set
+   - Use a specific version tag for production
+
+4. Configure any other environment variables in Dokploy. Refer to `.env.example` for all available options.
+
+5. Save the service. Dokploy will clone the repository, read the compose file, pull the latest image, and deploy the container.
+
+### How Auto-Deploy Works
+
+- You push code to the configured branch
+- GitHub Actions builds and pushes a new image to the configured `TRACKTOR_IMAGE` tag
+- GitHub sends a webhook to Dokploy
+- Dokploy pulls the latest commit and runs `docker compose up -d`
+- Docker pulls the latest image (due to `pull_policy: always`) and redeploys the container
+- The `tracktor-data` volume persists data across redeploys
+
+### Uninstalling
+
+1. Delete the Dokploy Compose service
+2. Remove the `tracktor-data` volume if you no longer need the data
+
 ## Proxmox LXC
 
 For Proxmox LXC container setup, use [Community-Scripts](https://community-scripts.github.io/ProxmoxVE/scripts?id=tracktor) for a streamlined installation process.

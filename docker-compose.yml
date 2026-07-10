@@ -1,0 +1,16 @@
+services:
+  tracktor-app:
+    image: ${TRACKTOR_IMAGE}
+    pull_policy: always
+    container_name: tracktor-app
+    restart: always
+    ports:
+      - '3000'
+    volumes:
+      - tracktor-data:/data # Database and uploads are placed in this location
+    env_file:
+      - .env
+# Adding a volume is recommended to persist data across container restarts
+volumes:
+  tracktor-data:
+    name: tracktor-data
