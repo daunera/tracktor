@@ -16,7 +16,7 @@
   import { configStore } from '$lib/stores/config.svelte';
   import { themeStore } from '$lib/stores/theme.svelte';
   import { authStore } from '$lib/stores/auth.svelte';
-  import { demo_banner, default_login, app_name } from '$lib/paraglide/messages/_index.js';
+  import { demo_banner, default_login, app_name, og_title, og_description } from '$lib/paraglide/messages/_index.js';
   import { app_new_update_available } from '$lib/paraglide/messages';
 
   let { children, data }: LayoutProps = $props();
@@ -79,6 +79,16 @@
 
 <svelte:head>
   <title>{app_name()}</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta property="og:title" content={og_title()} />
+  <meta property="og:description" content={og_description()} />
+  <meta property="og:image" content="https://tracktor.dauner.hu/og-image.png" />
+  <meta property="og:url" content={`https://tracktor.dauner.hu${page.url.pathname}`} />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={og_title()} />
+  <meta name="twitter:description" content={og_description()} />
+  <meta name="twitter:image" content="https://tracktor.dauner.hu/og-image.png" />
 </svelte:head>
 
 <ModeWatcher defaultMode="system" />
