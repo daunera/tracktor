@@ -15,7 +15,7 @@
     <div
       id="delete-confirmation-dialog"
       in:scale={{ duration: 500 }}
-      class="delete-confirmation-dialog flex max-h-[90vh] max-w-xl min-w-sm flex-col items-center justify-center overflow-y-auto rounded-lg bg-white p-8 shadow-2xl dark:bg-gray-800"
+      class="delete-confirmation-dialog flex w-[80vh] max-w-[400px] max-h-[90vh] max-w-xl min-w-0 flex-col items-center justify-center overflow-y-auto rounded-lg bg-white p-8 shadow-2xl sm:w-auto sm:min-w-sm dark:bg-card"
     >
       <span id="delete-confirmation-icon" class="rounded-lg bg-rose-50 p-3">
         <Trash2 class="h-6 w-6 text-rose-600" />

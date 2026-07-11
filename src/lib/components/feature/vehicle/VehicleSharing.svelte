@@ -159,7 +159,7 @@
   >
     <div
       in:scale={{ duration: 500 }}
-      class="flex max-h-[90vh] max-w-xl min-w-sm flex-col items-center justify-center overflow-y-auto rounded-lg bg-white p-8 shadow-2xl dark:bg-gray-800"
+      class="flex w-[80vh] max-w-[400px] max-h-[90vh] max-w-xl min-w-0 flex-col items-center justify-center overflow-y-auto rounded-lg bg-white p-8 shadow-2xl sm:w-auto sm:min-w-sm dark:bg-card"
     >
       <span class="rounded-lg bg-amber-50 p-3">
         <ArrowLeftRight class="h-6 w-6 text-amber-600" />
