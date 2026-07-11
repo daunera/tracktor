@@ -10,6 +10,7 @@
   import Lock from '@lucide/svelte/icons/lock';
   import { sheetStore } from '$stores/sheet.svelte';
   import * as m from '$lib/paraglide/messages';
+  import { legal_nav_privacy, legal_nav_tos } from '$lib/paraglide/messages';
 
   let processing = $state(false);
 
@@ -156,3 +157,14 @@
     {/if}
   </fieldset>
 </form>
+
+<div class="border-t pt-4 pb-2">
+  <div class="text-muted-foreground flex items-center justify-center gap-4 text-xs">
+    <a href="/privacy-policy" class="hover:text-foreground transition-colors">
+      {legal_nav_privacy()}
+    </a>
+    <a href="/terms-of-service" class="hover:text-foreground transition-colors">
+      {legal_nav_tos()}
+    </a>
+  </div>
+</div>
