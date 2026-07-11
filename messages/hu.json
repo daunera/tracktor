@@ -849,5 +849,15 @@
   "legal_tos_contact": "Kapcsolat",
   "legal_tos_contact_desc": "Ha kérdése van a Felhasználási feltételekkel kapcsolatban, kérjük, lépjen kapcsolatba velünk a következő címen:",
   "legal_nav_privacy": "Adatvédelmi nyilatkozat",
-  "legal_nav_tos": "Felhasználási feltételek"
+  "legal_nav_tos": "Felhasználási feltételek",
+  "landing_title": "Tracktor",
+  "landing_subtitle": "A háztáji járműkövető alkalmazás",
+  "landing_feature_fuel": "Tankolás",
+  "landing_feature_fuel_desc": "Kövesd az üzemanyag-fogyasztást, költségeket és futásteljesítményt",
+  "landing_feature_maintenance": "Karbantartás",
+  "landing_feature_maintenance_desc": "Rögzítsd a szervizelőzményeket és ütemezz javításokat",
+  "landing_feature_insurance": "Biztosítás",
+  "landing_feature_insurance_desc": "Kezeld a kötvényeket, fedezetet és megújításokat",
+  "landing_feature_reminders": "Emlékeztetők",
+  "landing_feature_reminders_desc": "Sosem maradsz le fontos dátumokról"
 }

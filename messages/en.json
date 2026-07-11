@@ -848,5 +848,15 @@
   "legal_tos_contact": "Contact",
   "legal_tos_contact_desc": "For any questions regarding these Terms of Service, please contact us at:",
   "legal_nav_privacy": "Privacy Policy",
-  "legal_nav_tos": "Terms of Service"
+  "legal_nav_tos": "Terms of Service",
+  "landing_title": "Tracktor",
+  "landing_subtitle": "Vehicle Tracking And Management Application",
+  "landing_feature_fuel": "Fuel Logs",
+  "landing_feature_fuel_desc": "Track fuel consumption, costs, and mileage",
+  "landing_feature_maintenance": "Maintenance",
+  "landing_feature_maintenance_desc": "Record service history and schedule repairs",
+  "landing_feature_insurance": "Insurance",
+  "landing_feature_insurance_desc": "Manage policies, coverage, and renewals",
+  "landing_feature_reminders": "Reminders",
+  "landing_feature_reminders_desc": "Never miss important dates again"
 }
