@@ -207,6 +207,7 @@ flowchart LR
 
 5. Find the **Compose Service ID**:
    - Run the following command (replace the URL and token):
+
    ```bash
    curl -X GET 'https://YOUR_DOKPLOY_DOMAIN/api/project.all' \
      -H 'accept: application/json' \
