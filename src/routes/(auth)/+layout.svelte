@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import * as Card from '$lib/components/ui/card/index.js';
   import Tractor from '@lucide/svelte/icons/tractor';
+  import { legal_nav_privacy, legal_nav_tos } from '$lib/paraglide/messages';
 
   let { children } = $props();
 
@@ -11,7 +12,7 @@
 
 <div
   id="auth-container"
-  class="bg-background flex w-full grow items-center justify-center gap-6 overflow-hidden p-4 md:p-10"
+  class="bg-background flex w-full grow flex-col items-center justify-center gap-6 overflow-hidden p-4 md:p-10"
 >
   <div id="auth-card-wrapper" class="w-full max-w-2xl">
     <Card.Root id="auth-card-root" class="overflow-hidden p-0">
@@ -40,5 +41,13 @@
         </div>
       </Card.Content>
     </Card.Root>
+  </div>
+  <div class="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+    <a href="/privacy-policy" class="hover:text-foreground transition-colors">
+      {legal_nav_privacy()}
+    </a>
+    <a href="/terms-of-service" class="hover:text-foreground transition-colors">
+      {legal_nav_tos()}
+    </a>
   </div>
 </div>
