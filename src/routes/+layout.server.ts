@@ -4,5 +4,6 @@ import { env } from '$lib/config/env.server';
 
 export const load: LayoutServerLoad = async () => ({
   appVersion,
-  maxFileSize: env.BODY_SIZE_LIMIT
+  maxFileSize: env.BODY_SIZE_LIMIT,
+  baseUrl: env.BASE_URL
 });
