@@ -31,9 +31,7 @@
   const ownerLabel = $derived(
     !vehicle.ownerName && !vehicle.ownerUsername
       ? null
-      : vehicle.userId && authStore.user?.id === vehicle.userId
-        ? m.vehicle_details_owner_you()
-        : vehicle.ownerName || vehicle.ownerUsername
+      : vehicle.ownerName || vehicle.ownerUsername
   );
 </script>
 
@@ -67,38 +65,8 @@
       </div>
     </div>
 
-    <!-- Compact summary chips -->
-    <div class="flex flex-wrap gap-2 px-5 pt-4">
-      {#if ownerLabel}
-        <span
-          class="border-input bg-background flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"
-        >
-          <User class="h-3 w-3" />
-          {ownerLabel}
-        </span>
-      {/if}
-      {#if vehicle.licensePlate}
-        <span
-          class="border-input bg-background rounded-full border px-3 py-1 text-xs font-semibold"
-        >
-          {vehicle.licensePlate}
-        </span>
-      {/if}
-      <span class="border-input bg-background rounded-full border px-3 py-1 text-xs font-medium">
-        {vehicle.year}
-      </span>
-      <span class="border-input bg-background rounded-full border px-3 py-1 text-xs font-medium">
-        {fuelLabel}
-      </span>
-      {#if odometerText}
-        <span class="border-input bg-background rounded-full border px-3 py-1 text-xs font-medium">
-          {odometerText}
-        </span>
-      {/if}
-    </div>
-
     <!-- Content -->
-    <div class="space-y-4 p-5">
+    <div class="space-y-4 p-5 pt-0">
       <!-- Details (concise, minimal) -->
       <div class="space-y-3">
         <div>
@@ -156,6 +124,20 @@
               {m.vehicle_details_year()}
             </p>
             <p class="text-sm font-medium">{vehicle.year}</p>
+          </div>
+          <div class="space-y-1">
+            <p class="text-muted-foreground text-xs">
+              {m.vehicle_details_owner()}
+            </p>
+            <p class="text-sm font-medium">
+              {ownerLabel
+                ? ownerLabel +
+                  (vehicle.userId &&
+                  authStore.user?.id === vehicle.userId
+                    ? " (" + m.vehicle_details_owner_you() + ")"
+                    : "")
+                : m.vehicle_details_not_specified()}
+            </p>
           </div>
         </div>
       </div>
