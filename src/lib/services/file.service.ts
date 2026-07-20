@@ -2,6 +2,7 @@ import { HttpClient } from '$lib/helper/http.helper';
 import type { Response } from '$lib/domain';
 import type { ApiResponse } from '$lib/response';
 import { withBase } from '$lib/utils';
+import * as m from '$lib/paraglide/messages';
 
 // Create a separate HTTP client for file uploads with longer timeout
 const fileUploadClient = new HttpClient({
@@ -21,7 +22,7 @@ export const uploadFile = async (file: File): Promise<Response<any>> => {
     res.data = response.data.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to upload file.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

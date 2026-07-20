@@ -3,6 +3,7 @@ import {
   NOTIFICATION_SOURCES,
   NOTIFICATION_TYPES
 } from '$lib/domain/notification';
+import * as m from '$lib/paraglide/messages';
 
 type NotificationType = keyof typeof NOTIFICATION_TYPES;
 type NotificationSource = keyof typeof NOTIFICATION_SOURCES;
@@ -60,7 +61,11 @@ export function formatReminderMessage(type: string, note: string | null, dueDate
     day: 'numeric'
   });
 
-  return `${typeLabel} reminder${note ? `: ${note}` : ''} (Due: ${dueDateFormatted})`;
+  return m.notif_reminder_template({
+    type: typeLabel,
+    note: note ? `: ${note}` : '',
+    date: dueDateFormatted
+  });
 }
 
 export function getDaysUntil(targetDate: Date): number {
@@ -76,20 +81,22 @@ export function formatExpiryMessage(
   daysUntilExpiry: number
 ): string {
   if (daysUntilExpiry < 0) {
-    return `${label} ${identifier} expired ${Math.abs(daysUntilExpiry)} day${
-      Math.abs(daysUntilExpiry) === 1 ? '' : 's'
-    } ago`;
+    return m.notif_expiry_ago({
+      label,
+      identifier,
+      days: Math.abs(daysUntilExpiry)
+    });
   }
 
   if (daysUntilExpiry === 0) {
-    return `${label} ${identifier} expires today`;
+    return m.notif_expiry_today({ label, identifier });
   }
 
   if (daysUntilExpiry === 1) {
-    return `${label} ${identifier} expires tomorrow`;
+    return m.notif_expiry_tomorrow({ label, identifier });
   }
 
-  return `${label} ${identifier} expires in ${daysUntilExpiry} days`;
+  return m.notif_expiry_in_days({ label, identifier, days: daysUntilExpiry });
 }
 
 export function sortNotificationsByDueDate(

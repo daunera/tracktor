@@ -1,6 +1,17 @@
 import { error, json } from '@sveltejs/kit';
 import { ZodError } from 'zod';
 import { AppError } from '$server/exceptions/AppError';
+import * as m from '$lib/paraglide/messages';
+
+const getLocale = (e: { request: Request }): string | undefined => {
+  try {
+    const cookie = e.request.headers.get('cookie') || '';
+    const match = cookie.match(/paraglide_lang=([^;]+)/);
+    return match ? match[1] : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /** SvelteKit throws Redirect and HttpError as plain class instances (not extending Error).
  *  These must be rethrown so the framework can handle them, NOT converted to 500s. */
@@ -29,7 +40,7 @@ function isFrameworkError(err: unknown): boolean {
   return isRedirect(err) || isHttpError(err);
 }
 
-export function rethrowRouteError(err: unknown, fallbackMessage = 'Internal server error'): never {
+export function rethrowRouteError(err: unknown, fallbackMessage?: string): never {
   // SvelteKit redirect() throws a Redirect object — pass through
   if (isRedirect(err)) {
     throw err;
@@ -41,20 +52,21 @@ export function rethrowRouteError(err: unknown, fallbackMessage = 'Internal serv
   }
 
   if (err instanceof ZodError) {
-    throw error(400, `Validation error: ${err.issues.map((issue) => issue.message).join(', ')}`);
+    const detail = err.issues.map((issue) => issue.message).join(', ');
+    throw error(400, m.api_validation_error({ detail }));
   }
 
   if (err instanceof AppError) {
     throw error(err.status, err.message);
   }
 
-  throw error(500, fallbackMessage);
+  throw error(500, fallbackMessage ?? m.api_internal_error());
 }
 
 export async function withRouteErrorHandling<T>(
   label: string,
   handler: () => Promise<T>,
-  fallbackMessage = 'Internal server error'
+  fallbackMessage?: string
 ): Promise<T> {
   try {
     return await handler();

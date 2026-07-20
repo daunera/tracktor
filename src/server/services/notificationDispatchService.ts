@@ -6,6 +6,7 @@ import type {
 } from '$lib/domain/notification-provider';
 import type { Notification } from '$lib/domain/notification';
 import logger from '$server/config/logger';
+import * as m from '$lib/paraglide/messages';
 
 import {
   generateHtmlDigest,
@@ -40,7 +41,7 @@ async function sendWebhookNotification(
       method: config.method,
       headers: buildWebhookHeaders(config),
       body: JSON.stringify({
-        title: 'Tracktor notifications',
+        title: m.notif_webhook_title(),
         notificationCount: notifications.length,
         channels: provider.channels,
         notifications,
@@ -93,7 +94,7 @@ async function sendGotifyNotification(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        title: `Tracktor Notification Summary`,
+        title: m.notif_gotify_title(),
         message: generatePlainTextDigest(groups, notifications.length),
         priority: config.priority
       })
@@ -148,7 +149,7 @@ async function sendNotificationsToProvider(
     const groups = groupNotifications(notifications);
     const result = await sendEmail({
       providerId: provider.id,
-      subject: `Tracktor: ${notifications.length} pending notification${notifications.length === 1 ? '' : 's'}`,
+      subject: m.notif_email_subject_template({ count: notifications.length }),
       text: generatePlainTextDigest(groups, notifications.length),
       html: generateHtmlDigest(groups, notifications.length)
     });
@@ -176,7 +177,7 @@ async function sendNotificationsToProvider(
     providerName: provider.name,
     providerType: provider.type,
     success: false,
-    error: `Unsupported provider type: ${provider.type}`,
+    error: m.notif_error_unsupported_provider({ type: provider.type }),
     notificationCount: notifications.length
   };
 }

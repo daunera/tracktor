@@ -8,6 +8,7 @@ import { AppError, Status } from '$server/exceptions/AppError';
 
 import { buildWebhookHeaders } from './notification-provider-http.helper';
 import { testEmailProvider } from './emailNotificationService';
+import * as m from '$lib/paraglide/messages';
 
 export type NotificationProviderTestResult = {
   success: boolean;
@@ -19,7 +20,7 @@ type NotificationProviderTestOptions = {
   testMessage?: string;
 };
 
-const DEFAULT_TEST_MESSAGE = 'This is a test notification from Tracktor';
+const DEFAULT_TEST_MESSAGE = m.notif_test_default_message();
 
 async function testWebhookProvider(
   config: WebhookProviderConfig,
@@ -30,7 +31,7 @@ async function testWebhookProvider(
       method: config.method,
       headers: buildWebhookHeaders(config),
       body: JSON.stringify({
-        title: 'Tracktor test notification',
+        title: m.notif_test_title(),
         message: testMessage,
         timestamp: new Date().toISOString(),
         test: true
@@ -50,7 +51,7 @@ async function testWebhookProvider(
 
     return {
       success: false,
-      error: err.message || 'Failed to send webhook'
+      error: err.message || m.notif_error_test_webhook_failed()
     };
   }
 }
@@ -66,7 +67,7 @@ async function testGotifyProvider(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        title: 'Tracktor test notification',
+        title: m.notif_test_title(),
         message: testMessage,
         priority: config.priority
       })
@@ -85,7 +86,7 @@ async function testGotifyProvider(
 
     return {
       success: false,
-      error: err.message || 'Failed to send Gotify notification'
+      error: err.message || m.notif_error_test_gotify_failed()
     };
   }
 }
@@ -104,6 +105,6 @@ export async function testNotificationProvider(
     case 'gotify':
       return testGotifyProvider(provider.config as GotifyProviderConfig, testMessage);
     default:
-      throw new AppError('Provider type is not supported for testing', Status.BAD_REQUEST);
+      throw new AppError(m.notif_error_test_unsupported(), Status.BAD_REQUEST);
   }
 }

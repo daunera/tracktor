@@ -160,7 +160,7 @@
                 <span>
                   {$formData.recurrenceType
                     ? getPuccRecurrenceTypeLabel($formData.recurrenceType, m)
-                    : 'Select recurrence'}
+                    : m.recurrence_select_placeholder()}
                 </span>
               </div>
             </Select.Trigger>

@@ -40,10 +40,10 @@
   const configSchema = z.object({
     dateFormat: z.string().refine((fmt) => {
       return isValidFormat(fmt).valid;
-    }, 'Format not valid'),
+    }, m.settings_error_format_not_valid()),
     locale: z.string().min(2),
-    timezone: z.string().min(3).refine(isValidTimezone, 'Invalid timzone value.'),
-    currency: z.string().min(1, 'Currency is required'),
+    timezone: z.string().min(3).refine(isValidTimezone, m.settings_error_timezone_invalid()),
+    currency: z.string().min(1, m.settings_error_currency_required()),
     unitOfDistance: z.enum(['kilometer', 'mile']),
     unitOfVolume: z.enum(['liter', 'gallon']),
     unitOfLpg: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('liter'),

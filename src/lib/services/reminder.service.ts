@@ -1,5 +1,6 @@
 import type { Reminder, Response } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
+import * as m from '$lib/paraglide/messages';
 
 const serializeReminder = (reminder: Reminder) => ({
   ...reminder,
@@ -19,7 +20,7 @@ export const saveReminder = async (reminder: Reminder): Promise<Response<Reminde
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save reminder.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };
@@ -28,7 +29,7 @@ export const deleteReminder = async (reminder: Reminder): Promise<Response<strin
   if (!reminder.id) {
     return {
       status: 'ERROR',
-      error: 'Reminder id is required to delete.'
+      error: m.file_upload_error()
     };
   }
 
@@ -40,7 +41,7 @@ export const deleteReminder = async (reminder: Reminder): Promise<Response<strin
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete reminder.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

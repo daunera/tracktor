@@ -1,3 +1,5 @@
+import * as m from '$lib/paraglide/messages';
+
 // Stub helpers for CSV import flows. Implement the real parsing and persistence logic here.
 export type CsvParseOptions = {
   delimiter: string;
@@ -55,7 +57,7 @@ export const parseCsvPreview = async (file: File, options: CsvParseOptions): Pro
     return { headers, rows };
   } catch (err: any) {
     console.error('Failed to parse CSV', err);
-    throw new Error(err?.message || 'Failed to parse CSV file.', err);
+    throw new Error(err?.message || m.fuel_import_error_parse_csv(), err);
   }
 };
 
@@ -84,25 +86,27 @@ export const importFuelLogsFromCsv = async (
 
       const parsedDate = parseWithFormat(dateStr, dateFormat);
       if (!parsedDate) {
-        throw new Error(`Row ${i + 1}: Invalid date "${dateStr}" for format "${dateFormat}"`);
+        throw new Error(
+          m.fuel_import_row_date_invalid({ row: i + 1, date: dateStr, format: dateFormat })
+        );
       }
 
       const odometerStr = row.odometer?.trim();
       const odometer = odometerStr ? Number(odometerStr) : null;
       if (odometer === null || isNaN(odometer)) {
-        throw new Error(`Row ${i + 1}: Odometer must be a valid number`);
+        throw new Error(m.fuel_import_row_odometer_invalid({ row: i + 1 }));
       }
 
       const fuelAmountStr = row.fuelAmount?.trim();
       const fuelAmount = fuelAmountStr ? Number(fuelAmountStr) : null;
       if (fuelAmount === null || isNaN(fuelAmount)) {
-        throw new Error(`Row ${i + 1}: Fuel Amount must be a valid number`);
+        throw new Error(m.fuel_import_row_fuel_invalid({ row: i + 1 }));
       }
 
       const costStr = row.cost?.trim();
       const cost = costStr ? Number(costStr) : null;
       if (cost === null || isNaN(cost)) {
-        throw new Error(`Row ${i + 1}: Cost must be a valid number`);
+        throw new Error(m.fuel_import_row_cost_invalid({ row: i + 1 }));
       }
 
       // Parse optional boolean fields
@@ -145,11 +149,11 @@ export const importFuelLogsFromCsv = async (
         result.imported++;
       } else {
         result.failed++;
-        result.errors.push(response.error || `Row ${i + 1}: Unknown error`);
+        result.errors.push(response.error || m.fuel_import_row_unknown_error({ row: i + 1 }));
       }
     } catch (err: any) {
       result.failed++;
-      result.errors.push(err?.message || `Row ${i + 1}: Import failed`);
+      result.errors.push(err?.message || m.fuel_import_row_import_failed({ row: i + 1 }));
     }
   }
   return result;

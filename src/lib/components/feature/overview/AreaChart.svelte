@@ -7,7 +7,10 @@
   import LabelWithIcon from '$appui/LabelWithIcon.svelte';
   import CircleSlash2 from '@lucide/svelte/icons/circle-slash-2';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
-  import { overview_chart_no_data } from '$lib/paraglide/messages/_index.js';
+  import {
+    overview_chart_no_data,
+    overview_chart_average
+  } from '$lib/paraglide/messages/_index.js';
 
   type ChartPoint = DataPoint & { average: number };
 
@@ -115,7 +118,7 @@
           },
           {
             key: 'average',
-            label: 'Average',
+            label: overview_chart_average(),
             color: 'var(--muted-foreground)'
           }
         ]}

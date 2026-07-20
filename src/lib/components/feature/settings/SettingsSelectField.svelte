@@ -17,6 +17,7 @@
     disabled?: boolean;
   }
 
+  import * as m from '$lib/paraglide/messages';
   let {
     form,
     name,
@@ -24,7 +25,7 @@
     description,
     icon: Icon,
     options,
-    placeholder = 'Select an option',
+    placeholder = m.common_select_option(),
     value = $bindable(),
     disabled = false
   }: Props = $props();

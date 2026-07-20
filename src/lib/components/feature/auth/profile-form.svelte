@@ -112,7 +112,7 @@
     <!-- Name field -->
     <div class="w-full">
       <div class="form-label-wrapper flex flex-row items-center justify-between gap-2">
-        <label for="profile-name" data-slot="form-label" class="text-sm font-medium leading-none"
+        <label for="profile-name" data-slot="form-label" class="text-sm leading-none font-medium"
           >{m.profile_name()}</label
         >
         {#if isGoogleUser}
@@ -138,7 +138,7 @@
     <!-- Email field -->
     <div class="w-full">
       <div class="form-label-wrapper flex flex-row items-center justify-between gap-2">
-        <label for="profile-email" data-slot="form-label" class="text-sm font-medium leading-none"
+        <label for="profile-email" data-slot="form-label" class="text-sm leading-none font-medium"
           >{m.profile_email()}</label
         >
         {#if isGoogleUser}
@@ -229,7 +229,7 @@
     <!-- Theme selector -->
     <div class="border-t pt-4">
       <div class="form-label-wrapper flex flex-row items-center justify-between gap-2">
-        <span data-slot="form-label" class="text-sm font-medium leading-none"
+        <span data-slot="form-label" class="text-sm leading-none font-medium"
           >{m.profile_theme()}</span
         >
         <IconWithPopover

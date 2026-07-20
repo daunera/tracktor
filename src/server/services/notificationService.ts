@@ -18,6 +18,7 @@ import {
 } from './notification-service.helper';
 import { createFailureResponse, createSuccessResponse } from './service-response.helper';
 import { getAppConfigByKey } from './configService';
+import * as m from '$lib/paraglide/messages';
 
 type NotificationType = keyof typeof NOTIFICATION_TYPES;
 type NotificationSource = keyof typeof NOTIFICATION_SOURCES;
@@ -75,7 +76,11 @@ async function buildInsuranceNotifications(vehicleId: string): Promise<Generated
         vehicleId,
         type: 'insurance' as const,
         channel: CHANNEL_BY_TYPE.insurance,
-        message: formatExpiryMessage('Insurance policy', policy.policyNumber, daysUntilExpiry),
+        message: formatExpiryMessage(
+          m.notif_label_insurance_policy(),
+          policy.policyNumber,
+          daysUntilExpiry
+        ),
         source: 'system' as const,
         dueDate: expiryDate.toISOString(),
         notificationKey: `insurance:${policy.id}:${policy.endDate}`
@@ -103,7 +108,7 @@ async function buildPuccNotifications(vehicleId: string): Promise<GeneratedNotif
         type: 'pollution' as const,
         channel: CHANNEL_BY_TYPE.pollution,
         message: formatExpiryMessage(
-          'PUCC certificate',
+          m.notif_label_pucc_certificate(),
           certificate.certificateNumber,
           daysUntilExpiry
         ),
@@ -259,11 +264,11 @@ export const clearNotification = async (notificationId: string): Promise<ApiResp
   });
 
   if (!existingNotification) {
-    return createFailureResponse('Notification not found.', null);
+    return createFailureResponse(m.notif_error_not_found(), null);
   }
 
   if (existingNotification.channel === 'alert') {
-    return createFailureResponse('Alert notifications cannot be cleared.', null);
+    return createFailureResponse(m.notif_error_alert_cannot_clear(), null);
   }
 
   const clearedNotifications = await db
@@ -272,7 +277,7 @@ export const clearNotification = async (notificationId: string): Promise<ApiResp
     .where(eq(schema.notificationTable.id, notificationId))
     .returning();
 
-  return createSuccessResponse(clearedNotifications[0], 'Notification cleared successfully.');
+  return createSuccessResponse(clearedNotifications[0], m.notif_cleared());
 };
 
 export const markNotificationAsRead = async (notificationId: string): Promise<ApiResponse> => {
@@ -283,10 +288,10 @@ export const markNotificationAsRead = async (notificationId: string): Promise<Ap
     .returning();
 
   if (updatedNotification.length === 0) {
-    return createFailureResponse('Notification not found.', null);
+    return createFailureResponse(m.notif_error_not_found(), null);
   }
 
-  return createSuccessResponse(updatedNotification[0], 'Notification marked as read.');
+  return createSuccessResponse(updatedNotification[0], m.notif_marked_read());
 };
 
 export const markAllNotificationsAsRead = async (vehicleId: string): Promise<ApiResponse> => {
@@ -303,5 +308,5 @@ export const markAllNotificationsAsRead = async (vehicleId: string): Promise<Api
     )
     .returning();
 
-  return createSuccessResponse(updatedNotifications, 'All notifications marked as read.');
+  return createSuccessResponse(updatedNotifications, m.notif_all_marked_read());
 };

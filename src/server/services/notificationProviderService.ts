@@ -19,6 +19,7 @@ import * as schema from '$server/db/schema';
 import { AppError, Status } from '$server/exceptions/AppError';
 import { decrypt, encrypt } from '$server/utils/encryption';
 import { eq } from 'drizzle-orm';
+import * as m from '$lib/paraglide/messages';
 import { resolveUpdatedConfig } from './notification-provider-service.helper';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
 
@@ -29,7 +30,7 @@ function parseChannels(rawChannels: string): NotificationChannel[] {
     return notificationProviderChannelsSchema.parse(JSON.parse(rawChannels));
   } catch (error) {
     logger.error('Failed to parse provider channels', { rawChannels, error });
-    throw new AppError('Invalid provider channels', Status.INTERNAL_SERVER_ERROR);
+    throw new AppError(m.notif_error_invalid_channels(), Status.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -50,7 +51,7 @@ function parseProvider(provider: ProviderRecord): NotificationProviderWithParsed
       providerId: provider.id,
       error
     });
-    throw new AppError('Invalid provider configuration', Status.INTERNAL_SERVER_ERROR);
+    throw new AppError(m.notif_error_invalid_config(), Status.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -59,7 +60,7 @@ async function getProviderRecord(providerId: string): Promise<ProviderRecord> {
     where: (providers, { eq }) => eq(providers.id, providerId)
   });
 
-  return requireRecord(provider, 'Provider not found');
+  return requireRecord(provider, m.notif_error_provider_not_found());
 }
 
 export const getProvidersByUserId = async (): Promise<ApiResponse> => {
@@ -67,13 +68,13 @@ export const getProvidersByUserId = async (): Promise<ApiResponse> => {
     orderBy: (providers, { desc }) => [desc(providers.created_at)]
   });
 
-  return createSuccessResponse(providers.map(parseProvider), 'Providers fetched successfully');
+  return createSuccessResponse(providers.map(parseProvider), m.notif_providers_fetched());
 };
 
 export const getProviderById = async (providerId: string): Promise<ApiResponse> => {
   const provider = await getProviderRecord(providerId);
 
-  return createSuccessResponse(parseProvider(provider), 'Provider fetched successfully');
+  return createSuccessResponse(parseProvider(provider), m.notif_provider_fetched());
 };
 
 export const addProvider = async (
@@ -94,10 +95,10 @@ export const addProvider = async (
     .returning();
 
   if (!provider) {
-    throw new AppError('Failed to create provider', Status.INTERNAL_SERVER_ERROR);
+    throw new AppError(m.notif_provider_create_failed(), Status.INTERNAL_SERVER_ERROR);
   }
 
-  return createSuccessResponse(parseProvider(provider), 'Provider created successfully');
+  return createSuccessResponse(parseProvider(provider), m.notif_provider_created());
 };
 
 export const updateProvider = async (
@@ -126,10 +127,10 @@ export const updateProvider = async (
     .returning();
 
   if (!updatedProvider) {
-    throw new AppError('Failed to update provider', Status.INTERNAL_SERVER_ERROR);
+    throw new AppError(m.notif_provider_update_failed(), Status.INTERNAL_SERVER_ERROR);
   }
 
-  return createSuccessResponse(parseProvider(updatedProvider), 'Provider updated successfully');
+  return createSuccessResponse(parseProvider(updatedProvider), m.notif_provider_updated());
 };
 
 export const deleteProvider = async (providerId: string): Promise<ApiResponse> => {
@@ -139,7 +140,7 @@ export const deleteProvider = async (providerId: string): Promise<ApiResponse> =
     .delete(schema.notificationProviderTable)
     .where(eq(schema.notificationProviderTable.id, providerId));
 
-  return createSuccessResponse(null, 'Provider deleted successfully');
+  return createSuccessResponse(null, m.notif_provider_deleted());
 };
 
 export const getEnabledProvidersForChannels = async (channels: NotificationChannel[]) => {

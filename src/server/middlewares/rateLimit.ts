@@ -2,6 +2,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { BaseMiddleware, type MiddlewareResult } from './base';
 import type { ApiResponse } from '$lib';
 import { CorsMiddleware } from './cors';
+import * as m from '$lib/paraglide/messages';
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 1000; // max requests per window
@@ -63,7 +64,7 @@ export class RateLimitMiddleware extends BaseMiddleware {
   private createRateLimitResponse(request: Request): Response {
     const errorResponse: ApiResponse = {
       success: false,
-      message: 'Rate Limit Exceeded. Please try again later.',
+      message: m.api_rate_limit_exceeded(),
       errors: []
     };
 

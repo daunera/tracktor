@@ -3,6 +3,7 @@ import { env } from '$lib/config/env';
 import { apiClient } from '../helper/api.helper';
 import type { ApiResponse } from '../response';
 import { toast } from 'svelte-sonner';
+import * as m from '$lib/paraglide/messages';
 
 interface User {
   id: string;
@@ -58,8 +59,7 @@ class AuthStore {
 
       // Detect rejected/blocked status
       if (res.data?.reason === 'rejected') {
-        this.blockedReason =
-          res.data.message || 'Your account has been blocked by an administrator.';
+        this.blockedReason = res.data.message || m.auth_account_blocked();
         this.user = null;
         this.isLoggedIn = false;
         return;
@@ -94,7 +94,7 @@ class AuthStore {
       if (res.success && res.data) {
         this.user = res.data.user;
         this.isLoggedIn = true;
-        toast.success('Login successful');
+        toast.success(m.auth_login_success());
         return { success: true };
       }
       return { success: false };
@@ -102,7 +102,7 @@ class AuthStore {
       this.user = null;
       this.isLoggedIn = false;
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
+      const errorMessage = err.response?.data?.message || err.message || m.auth_login_failed();
       return { success: false, errorMessage };
     }
   };
@@ -128,7 +128,7 @@ class AuthStore {
       );
 
       if (res.success) {
-        toast.success('User created successfully.');
+        toast.success(m.auth_register_success());
         this.hasUsers = true;
         const autoApproved = !!(res.data as any)?.autoApproved;
         return { success: true, autoApproved };
@@ -136,7 +136,9 @@ class AuthStore {
       return { success: false };
     } catch (err: any) {
       console.error('Registration error:', err);
-      toast.error(`Registration failed: ${err.response?.data?.message || err.message}`);
+      toast.error(
+        `${m.auth_register_failed_prefix()}${err.response?.data?.message || err.message}`
+      );
       return { success: false };
     }
   };
@@ -168,13 +170,15 @@ class AuthStore {
           if (data.name !== undefined) this.user.name = data.name;
           if (data.email !== undefined) this.user.email = data.email;
         }
-        toast.success('Profile updated successfully');
+        toast.success(m.profile_update_success());
         return true;
       }
       return false;
     } catch (err: any) {
       console.error('Profile update error:', err);
-      toast.error(`Update failed: ${err.response?.data?.message || err.message}`);
+      toast.error(
+        `${m.profile_update_failed_prefix()}${err.response?.data?.message || err.message}`
+      );
       return false;
     }
   };

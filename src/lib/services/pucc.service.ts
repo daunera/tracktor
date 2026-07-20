@@ -1,6 +1,7 @@
 import type { Response, PollutionCertificate } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import { uploadFile } from './file.service';
+import * as m from '$lib/paraglide/messages';
 
 export const savePuccWithAttachment = async (
   certificate: PollutionCertificate,
@@ -14,7 +15,7 @@ export const savePuccWithAttachment = async (
     } catch (e: any) {
       return {
         status: 'ERROR',
-        error: e.response?.data?.message || 'Failed to upload attachment'
+        error: e.response?.data?.message || m.file_upload_error()
       };
     }
   }
@@ -44,7 +45,7 @@ export const savePucc = async (
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save pollution certificate.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };
@@ -56,7 +57,7 @@ export const deletePucc = async (pucc: PollutionCertificate): Promise<Response<s
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete PUCC.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

@@ -51,7 +51,7 @@ const buildAlert = (type: VehicleAlertType, expiryDate: Date): VehicleAlert => {
 };
 
 const buildMissingAlert = (type: VehicleAlertType): VehicleAlert => {
-  const label = type === 'insurance' ? 'Insurance' : 'PUCC';
+  const label = type === 'insurance' ? m.alert_type_insurance() : m.alert_type_pucc();
   return {
     type,
     status: 'missing',

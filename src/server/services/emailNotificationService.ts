@@ -3,6 +3,7 @@ import type { Transporter } from 'nodemailer';
 
 import type { EmailProviderConfig } from '$lib/domain/notification-provider';
 import logger from '$server/config/logger';
+import * as m from '$lib/paraglide/messages';
 
 import { AppError, Status } from '../exceptions/AppError';
 import { getEnabledProvidersByType } from './notificationProviderService';
@@ -31,7 +32,7 @@ async function resolveEmailProvider(providerId?: string) {
   const providers = await getEnabledProvidersByType('email');
 
   if (providers.length === 0) {
-    throw new AppError('No email provider configured', Status.BAD_REQUEST);
+    throw new AppError(m.notif_no_email_provider(), Status.BAD_REQUEST);
   }
 
   if (!providerId) {
@@ -41,7 +42,7 @@ async function resolveEmailProvider(providerId?: string) {
   const provider = providers.find((entry) => entry.id === providerId);
 
   if (!provider) {
-    throw new AppError('Email provider not found or disabled', Status.BAD_REQUEST);
+    throw new AppError(m.notif_email_provider_not_found(), Status.BAD_REQUEST);
   }
 
   return provider;
@@ -99,12 +100,14 @@ export const testEmailProvider = async (
 
     const recipient = testEmail || config.recepient || config.auth.user;
 
+    const testText = m.notif_test_email_body();
+
     await transporter.sendMail({
       from: config.fromName ? `"${config.fromName}" <${config.from}>` : config.from,
       to: recipient,
-      subject: 'Tracktor - Email Provider Test',
-      text: 'This is a test notification from Tracktor. Your email provider is configured correctly!',
-      html: '<p>This is a test notification from <strong>Tracktor</strong>.</p><p>Your email provider is configured correctly!</p>'
+      subject: m.notif_test_email_subject(),
+      text: testText,
+      html: `<p>${testText}</p>`
     });
 
     logger.info('Test email sent successfully', { to: recipient });

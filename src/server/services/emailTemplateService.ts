@@ -1,5 +1,6 @@
 import type { Notification } from '$lib/domain/notification';
 import { env } from '$lib/config/env.server';
+import * as m from '$lib/paraglide/messages';
 
 export interface NotificationGroup {
   type: string;
@@ -37,31 +38,31 @@ function getTypeMetadata(type: string): {
 } {
   const metadata: Record<string, { label: string; color: string }> = {
     reminder: {
-      label: 'Reminders',
+      label: m.notif_type_label_reminders(),
       color: '#2563eb'
     },
     alert: {
-      label: 'Alerts',
+      label: m.notif_type_label_alerts(),
       color: '#dc2626'
     },
     information: {
-      label: 'Information',
+      label: m.notif_type_label_information(),
       color: '#0284c7'
     },
     maintenance: {
-      label: 'Maintenance',
+      label: m.notif_type_label_maintenance(),
       color: '#7c3aed'
     },
     insurance: {
-      label: 'Insurance',
+      label: m.notif_type_label_insurance(),
       color: '#059669'
     },
     pollution: {
-      label: 'Pollution Certificate',
+      label: m.notif_type_label_pollution(),
       color: '#0891b2'
     },
     registration: {
-      label: 'Registration',
+      label: m.notif_type_label_registration(),
       color: '#ea580c'
     }
   };
@@ -102,28 +103,28 @@ function getDaysUntilDue(dueDate: string | Date): {
   if (diffDays < 0) {
     return {
       days: diffDays,
-      label: `${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} overdue`,
+      label: m.notif_due_overdue({ days: Math.abs(diffDays) }),
       urgent: true
     };
   }
 
   if (diffDays === 0) {
-    return { days: diffDays, label: 'Due today', urgent: true };
+    return { days: diffDays, label: m.notif_due_today(), urgent: true };
   }
 
   if (diffDays === 1) {
-    return { days: diffDays, label: 'Due tomorrow', urgent: true };
+    return { days: diffDays, label: m.notif_due_tomorrow(), urgent: true };
   }
 
   if (diffDays <= 7) {
     return {
       days: diffDays,
-      label: `${diffDays} days remaining`,
+      label: m.notif_due_remaining({ days: diffDays }),
       urgent: true
     };
   }
 
-  return { days: diffDays, label: `${diffDays} days remaining`, urgent: false };
+  return { days: diffDays, label: m.notif_due_remaining({ days: diffDays }), urgent: false };
 }
 
 /**
@@ -133,9 +134,9 @@ export function generatePlainTextDigest(
   notificationGroups: NotificationGroup[],
   totalCount: number
 ): string {
-  let text = `TRACKTOR NOTIFICATION SUMMARY\n`;
+  let text = `${m.notif_digest_title()}\n`;
   text += `=====================================\n`;
-  text += `You have ${totalCount} pending notification${totalCount !== 1 ? 's' : ''}.\n\n`;
+  text += `${m.notif_digest_pending({ count: totalCount })}\n\n`;
 
   notificationGroups.forEach((group) => {
     text += `${group.label} (${group.notifications.length})\n`;
@@ -144,9 +145,9 @@ export function generatePlainTextDigest(
     group.notifications.forEach((notification, index) => {
       const daysInfo = getDaysUntilDue(notification.dueDate);
       text += `${index + 1}. ${notification.message}\n`;
-      text += `   Type: ${group.label}\n`;
-      text += `   Due: ${formatDate(notification.dueDate)}\n`;
-      text += `   Status: ${daysInfo.label}\n`;
+      text += `   ${m.notif_digest_type({ label: group.label })}\n`;
+      text += `   ${m.notif_digest_due({ date: formatDate(notification.dueDate) })}\n`;
+      text += `   ${m.notif_digest_status({ status: daysInfo.label })}\n`;
       if (index < group.notifications.length - 1) {
         text += '\n';
       }
@@ -156,7 +157,7 @@ export function generatePlainTextDigest(
   });
 
   text += `=====================================\n`;
-  text += `Open Tracktor to review and manage these notifications.\n`;
+  text += `${m.notif_digest_footer()}\n`;
 
   return text;
 }
@@ -174,7 +175,7 @@ export function generateHtmlDigest(
       const notificationsHtml = group.notifications
         .map((notification, index) => {
           const daysInfo = getDaysUntilDue(notification.dueDate);
-          return `${index + 1}. ${escapeHtml(notification.message)}<br>Due: ${formatDate(notification.dueDate)}<br>Status: <strong>${escapeHtml(daysInfo.label)}</strong>`;
+          return `${index + 1}. ${escapeHtml(notification.message)}<br>${m.notif_digest_due({ date: formatDate(notification.dueDate) })}<br>${m.notif_digest_status({ status: escapeHtml(daysInfo.label) })}`;
         })
         .join('<br><br>');
 
@@ -185,19 +186,21 @@ export function generateHtmlDigest(
   const appUrl = env.BASE_URL || '';
   const appLinkHtml = appUrl ? `<a href="${escapeHtml(appUrl)}">Open Tracktor</a><br><br>` : '';
 
+  const digestTitle = m.notif_digest_title();
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Tracktor Notification Summary</title>
+	<title>${escapeHtml(digestTitle)}</title>
 </head>
 <body style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6;">
-	<strong>Tracktor Notification Summary</strong><br>
-	You have <strong>${totalCount}</strong> pending notification${totalCount !== 1 ? 's' : ''}.<br><br>
+	<strong>${escapeHtml(digestTitle)}</strong><br>
+	${m.notif_digest_pending({ count: totalCount })}<br><br>
 	${groupsHtml}<br><br>
 	${appLinkHtml}
-	This is an automated message from Tracktor.
+	${m.notif_digest_auto()}
 </body>
 </html>`;
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import * as m from '$lib/paraglide/messages';
 
 export const NOTIFICATION_CHANNELS = {
   reminder: 'reminder',
@@ -59,7 +60,7 @@ export const notificationSchema = z.object({
       ...Array<keyof typeof NOTIFICATION_TYPES>
     ]
   ),
-  message: z.string().min(1, 'Message is required'),
+  message: z.string().min(1, m.notif_zod_message_required()),
   source: z.enum(
     notificationSourceOptions as [
       keyof typeof NOTIFICATION_SOURCES,

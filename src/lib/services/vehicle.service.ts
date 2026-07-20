@@ -1,6 +1,7 @@
 import type { DataPoint, Response, Vehicle } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import { uploadFile } from './file.service';
+import * as m from '$lib/paraglide/messages';
 
 export const fetchMileageData = async (vehicleId: string): Promise<DataPoint[]> => {
   try {
@@ -59,7 +60,7 @@ export const saveVehicleWithImage = async (
     } catch (e: any) {
       return {
         status: 'ERROR',
-        error: e.response?.data?.message || 'Failed to upload image'
+        error: e.response?.data?.message || m.file_upload_error()
       };
     }
   }
@@ -86,7 +87,7 @@ const saveVehicle = async (
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save vehicle.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };
@@ -98,7 +99,7 @@ export const deleteVehicle = async (vehicleId: string): Promise<Response<string>
     res.data = vehicleId;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete vehicle.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

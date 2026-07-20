@@ -1,6 +1,7 @@
 import type { FuelLog, Response } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import { uploadFile } from './file.service';
+import * as m from '$lib/paraglide/messages';
 
 export const saveFuelLogWithAttachment = async (
   fuelLog: FuelLog,
@@ -14,7 +15,7 @@ export const saveFuelLogWithAttachment = async (
     } catch (e: any) {
       return {
         status: 'ERROR',
-        error: e.response?.data?.message || 'Failed to upload attachment'
+        error: e.response?.data?.message || m.file_upload_error()
       };
     }
   }
@@ -42,7 +43,7 @@ export const saveFuelLog = async (fuelLog: FuelLog): Promise<Response<FuelLog>> 
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save fuel log.';
+    res.error = e.response?.data?.message || m.fuel_toast_error_prefix();
   }
   return res;
 };
@@ -56,7 +57,7 @@ export const deleteFuelLog = async (fuelLog: FuelLog): Promise<Response<string>>
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete fuel log.';
+    res.error = e.response?.data?.message || m.fuel_toast_error_prefix();
   }
   return res;
 };

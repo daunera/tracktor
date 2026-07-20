@@ -46,7 +46,7 @@
     <TriangleAlert class="text-destructive h-16 w-16" />
     <h1 class="text-2xl font-semibold">{msg(m.error_title, 'Something Went Wrong')}</h1>
     <p class="text-muted-foreground max-w-md text-balance">
-      {page.error?.message ?? 'An unexpected error occurred.'}
+      {page.error?.message ?? m.error_unexpected()}
     </p>
     <Button onclick={() => goto('/')}>
       {msg(m.error_action, 'Go Home')}

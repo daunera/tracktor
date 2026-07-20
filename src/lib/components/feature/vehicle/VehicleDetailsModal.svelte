@@ -28,9 +28,7 @@
   const odometerText = $derived(vehicle.odometer ? formatDistance(vehicle.odometer) : null);
 
   const ownerLabel = $derived(
-    !vehicle.ownerName && !vehicle.ownerUsername
-      ? null
-      : vehicle.ownerName || vehicle.ownerUsername
+    !vehicle.ownerName && !vehicle.ownerUsername ? null : vehicle.ownerName || vehicle.ownerUsername
   );
 </script>
 
@@ -131,10 +129,9 @@
             <p class="text-sm font-medium">
               {ownerLabel
                 ? ownerLabel +
-                  (vehicle.userId &&
-                  authStore.user?.id === vehicle.userId
-                    ? " (" + m.vehicle_details_owner_you() + ")"
-                    : "")
+                  (vehicle.userId && authStore.user?.id === vehicle.userId
+                    ? ' (' + m.vehicle_details_owner_you() + ')'
+                    : '')
                 : m.vehicle_details_not_specified()}
             </p>
           </div>

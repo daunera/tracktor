@@ -1,6 +1,7 @@
 import type { Response, Insurance } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import { uploadFile } from './file.service';
+import * as m from '$lib/paraglide/messages';
 
 export const saveInsuranceWithAttachment = async (
   insurance: Insurance,
@@ -14,7 +15,7 @@ export const saveInsuranceWithAttachment = async (
     } catch (e: any) {
       return {
         status: 'ERROR',
-        error: e.response?.data?.message || 'Failed to upload attachment'
+        error: e.response?.data?.message || m.file_upload_error()
       };
     }
   }
@@ -42,7 +43,7 @@ export const saveInsurance = async (insurance: Insurance): Promise<Response<Insu
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save insurance.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };
@@ -56,7 +57,7 @@ export const deleteInsurance = async (insurance: Insurance): Promise<Response<st
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete insurance.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

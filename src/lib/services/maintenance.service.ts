@@ -1,6 +1,7 @@
 import type { Response, MaintenanceLog } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import { uploadFile } from './file.service';
+import * as m from '$lib/paraglide/messages';
 
 export const saveMaintenanceLogWithAttachment = async (
   maintenanceLog: MaintenanceLog,
@@ -14,7 +15,7 @@ export const saveMaintenanceLogWithAttachment = async (
     } catch (e: any) {
       return {
         status: 'ERROR',
-        error: e.response?.data?.message || 'Failed to upload attachment'
+        error: e.response?.data?.message || m.file_upload_error()
       };
     }
   }
@@ -44,7 +45,7 @@ export const saveMaintenanceLog = async (
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to save maintenance log.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };
@@ -60,7 +61,7 @@ export const deleteMaintenanceLog = async (
     res.data = response.data;
   } catch (e: any) {
     res.status = 'ERROR';
-    res.error = e.response?.data?.message || 'Failed to delete maintenance log.';
+    res.error = e.response?.data?.message || m.file_upload_error();
   }
   return res;
 };

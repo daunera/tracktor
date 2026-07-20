@@ -2,6 +2,7 @@
 import { data as currencies } from 'currency-codes';
 import { getCurrencySymbol } from '$lib/helper/format.helper';
 import { z } from 'zod/v4';
+import * as m from '$lib/paraglide/messages';
 
 interface SettingsSchemaOptions {
   includeNotificationProcessingSchedule?: boolean;
@@ -26,10 +27,12 @@ export function createSettingsConfigSchema(
 ) {
   const baseSchema = z
     .object({
-      dateFormat: z.string().refine((fmt) => isValidFormat(fmt).valid, 'Format not valid'),
+      dateFormat: z
+        .string()
+        .refine((fmt) => isValidFormat(fmt).valid, m.settings_error_format_not_valid()),
       locale: z.string().min(2),
-      timezone: z.string().min(3).refine(isValidTimezone, 'Invalid timzone value.'),
-      currency: z.string().min(1, 'Currency is required'),
+      timezone: z.string().min(3).refine(isValidTimezone, m.settings_error_timezone_invalid()),
+      currency: z.string().min(1, m.settings_error_currency_required()),
       unitOfDistance: z.enum(['kilometer', 'mile']),
       unitOfVolume: z.enum(['liter', 'gallon']),
       unitOfLpg: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('liter'),
@@ -49,7 +52,7 @@ export function createSettingsConfigSchema(
     .refine((obj) => {
       if (obj.mileageUnitFormat !== 'uk-mpg') return true;
       return obj.unitOfDistance === 'mile' && obj.unitOfVolume === 'liter';
-    }, 'UK MPG calculation requires unit of distance to be miles and unit of volume to be litres.');
+    }, m.settings_error_uk_mpg_units());
 
   if (!options.includeNotificationProcessingSchedule) {
     return baseSchema;
@@ -58,7 +61,7 @@ export function createSettingsConfigSchema(
   return baseSchema.extend({
     notificationProcessingSchedule: z
       .string()
-      .refine((expr) => expr.trim().split(/\s+/).length === 5, 'Invalid cron expression')
+      .refine((expr) => expr.trim().split(/\s+/).length === 5, m.notif_cron_invalid())
       .default('0 9 * * *')
   });
 }
@@ -95,8 +98,8 @@ export function createSettingsOptions(
     gasUnitOptions: [
       { value: 'liter', label: m.common_litre() },
       { value: 'gallon', label: m.common_gallon() },
-      { value: 'kilogram', label: 'Kilogram (kg)' },
-      { value: 'pound', label: 'Pound (lb)' }
+      { value: 'kilogram', label: m.common_kilogram_unit() },
+      { value: 'pound', label: m.common_pound_unit() }
     ],
     mileageUnitFormatOptions: [
       {

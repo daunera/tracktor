@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { page } from '$app/stores';
+  import * as m from '$lib/paraglide/messages';
 
   let authCheckComplete = $state(false);
   let initialError = $state<string | null>(null);
@@ -21,9 +22,7 @@
       // Check URL params (e.g. from Google OAuth redirect)
       const reasonParam = $page.url.searchParams.get('reason');
       if (reasonParam === 'rejected') {
-        initialError =
-          $page.url.searchParams.get('message') ||
-          'Your account has been blocked by an administrator.';
+        initialError = $page.url.searchParams.get('message') || m.auth_account_blocked();
       }
     }
 

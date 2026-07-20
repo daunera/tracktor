@@ -171,7 +171,11 @@
                       ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
                       : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}"
                 >
-                  {user.isSuperadmin ? 'superadmin' : user.role}
+                  {user.isSuperadmin
+                    ? m.settings_users_role_superadmin()
+                    : user.role === 'admin'
+                      ? m.settings_users_role_admin()
+                      : m.settings_users_role_user()}
                 </span>
               </td>
               <td class="px-4 py-3">
@@ -181,7 +185,9 @@
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                     : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}"
                 >
-                  {user.authProvider}
+                  {user.authProvider === 'google'
+                    ? m.settings_users_provider_google()
+                    : m.settings_users_provider_password()}
                 </span>
               </td>
               <td class="px-4 py-3">
@@ -193,7 +199,11 @@
                       ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
                       : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}"
                 >
-                  {user.status}
+                  {user.status === 'active'
+                    ? m.settings_users_status_active()
+                    : user.status === 'pending'
+                      ? m.settings_users_status_pending()
+                      : m.settings_users_status_rejected()}
                 </span>
               </td>
               <td class="text-muted-foreground hidden px-4 py-3 text-xs sm:table-cell">
