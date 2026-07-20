@@ -111,24 +111,33 @@ class AuthStore {
     window.location.href = '/api/auth/google';
   };
 
-  register = async (username: string, password: string) => {
+  register = async (
+    username: string,
+    password: string,
+    email: string
+  ): Promise<{ success: boolean; autoApproved?: boolean }> => {
     try {
       const { data: res } = await apiClient.post<ApiResponse>(
         '/auth/register',
-        { username, password },
+        {
+          username,
+          password,
+          email
+        },
         { skipInterceptors: true }
       );
 
       if (res.success) {
-        toast.success('User created successfully. Please login.');
+        toast.success('User created successfully.');
         this.hasUsers = true;
-        return true;
+        const autoApproved = !!(res.data as any)?.autoApproved;
+        return { success: true, autoApproved };
       }
-      return false;
+      return { success: false };
     } catch (err: any) {
       console.error('Registration error:', err);
       toast.error(`Registration failed: ${err.response?.data?.message || err.message}`);
-      return false;
+      return { success: false };
     }
   };
 
@@ -144,11 +153,21 @@ class AuthStore {
     }
   };
 
-  updateProfile = async (data: { currentPassword?: string; newPassword?: string }) => {
+  updateProfile = async (data: {
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }) => {
     try {
       const { data: res } = await apiClient.put<ApiResponse>('/auth/profile', data);
 
       if (res.success) {
+        // Update local user state with returned data
+        if (this.user) {
+          if (data.name !== undefined) this.user.name = data.name;
+          if (data.email !== undefined) this.user.email = data.email;
+        }
         toast.success('Profile updated successfully');
         return true;
       }

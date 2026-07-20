@@ -1,5 +1,4 @@
 <script lang="ts">
-  import AppSheet from '$layout/AppSheet.svelte';
   import DashboardNav from '$layout/DashboardNav.svelte';
   import LabelWithIcon from '$appui/LabelWithIcon.svelte';
   import VehicleForm from '$feature/vehicle/VehicleForm.svelte';
@@ -33,6 +32,12 @@
       authStore.user?.id != null &&
       selectedVehicle.userId === authStore.user.id
   );
+  const isSharedUser = $derived(
+    selectedVehicle?.userId != null &&
+      authStore.user?.id != null &&
+      selectedVehicle.userId !== authStore.user.id
+  );
+  const showSharing = $derived(isOwner || isSharedUser);
 
   onMount(async () => {
     configStore.refreshConfigs();
@@ -131,7 +136,7 @@
       <div id="dashboard-details-section" class="mt-8">
         {#if vehicleStore.selectedId}
           <div id="dashboard-vehicle-content" class="space-y-6">
-            <DashboardNav {isOwner} />
+            <DashboardNav {showSharing} />
             <div id="dashboard-vehicle-details" class="lg:bg-secondary rounded-2xl p-0 lg:p-2">
               {@render children()}
             </div>
@@ -153,5 +158,3 @@
     </div>
   {/if}
 </main>
-
-<AppSheet />

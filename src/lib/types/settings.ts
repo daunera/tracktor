@@ -8,7 +8,6 @@ export interface SettingsFormShape extends Record<string, unknown> {
   unitOfLpg: 'liter' | 'gallon' | 'kilogram' | 'pound';
   unitOfCng: 'liter' | 'gallon' | 'kilogram' | 'pound';
   mileageUnitFormat: 'distance-per-fuel' | 'fuel-per-distance' | 'uk-mpg';
-  theme: string;
   customCss?: string;
   featureFuelLog: boolean;
   featureMaintenance: boolean;

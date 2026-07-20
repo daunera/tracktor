@@ -12,6 +12,14 @@ export interface VehicleShareWithUser {
   userId: string;
   username: string;
   name: string | null;
+  email: string | null;
+  role: 'viewer' | 'editor';
+  createdAt: string;
+}
+
+export interface VehicleShareForUser {
+  id: string;
+  userId: string;
   role: 'viewer' | 'editor';
   createdAt: string;
 }

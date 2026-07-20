@@ -12,7 +12,7 @@
   import { configStore } from '$stores/config.svelte';
   import * as m from '$lib/paraglide/messages';
 
-  let { isOwner = false }: { isOwner?: boolean } = $props();
+  let { showSharing = false }: { showSharing?: boolean } = $props();
 
   type Section = {
     label: string;
@@ -66,7 +66,7 @@
     icon: Users
   };
 
-  let sections = $derived(isOwner ? [...baseSections, sharingSection] : baseSections);
+  let sections = $derived(showSharing ? [...baseSections, sharingSection] : baseSections);
 
   let visibleSections = $derived(
     sections.filter((section) => {

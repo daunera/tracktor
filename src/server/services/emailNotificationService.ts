@@ -9,6 +9,7 @@ import { getEnabledProvidersByType } from './notificationProviderService';
 
 interface EmailOptions {
   subject: string;
+  to?: string;
   text?: string;
   html?: string;
   providerId?: string;
@@ -56,7 +57,9 @@ export const sendEmail = async (
 
     const info = await transporter.sendMail({
       from: config.fromName ? `"${config.fromName}" <${config.from}>` : config.from,
-      to: Array.isArray(config.recepient) ? config.recepient.join(', ') : config.recepient,
+      to:
+        emailOptions.to ||
+        (Array.isArray(config.recepient) ? config.recepient.join(', ') : config.recepient),
       subject: emailOptions.subject,
       text: emailOptions.text,
       html: emailOptions.html
@@ -65,7 +68,7 @@ export const sendEmail = async (
     logger.info('Email sent successfully', {
       messageId: info.messageId,
       providerId: provider.id,
-      to: config.recepient
+      to: emailOptions.to || config.recepient
     });
 
     return {

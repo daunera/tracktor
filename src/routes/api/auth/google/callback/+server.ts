@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
 import { syncSuperadminRole } from '$server/services/authService';
+import { hasPendingInvitations, applyInvitationsOnAuth } from '$server/services/invitationService';
 import { env, isHttps } from '$lib/config/env.server';
 import { db } from '$server/db/index';
 import { usersTable } from '$server/db/schema/index';
@@ -94,6 +95,13 @@ export const GET: RequestHandler = async (event) => {
 
     // Sync superadmin role on every login
     await syncSuperadminRole(existingUser);
+
+    if (email) {
+      const approved = await applyInvitationsOnAuth(email, userId);
+      if (approved && userStatus === 'pending') {
+        userStatus = 'active';
+      }
+    }
   } else if (email) {
     // Check if user exists by email (account linking)
     existingUser = await db.query.usersTable.findFirst({
@@ -115,11 +123,21 @@ export const GET: RequestHandler = async (event) => {
 
       // Sync superadmin role on every login
       await syncSuperadminRole(existingUser);
+
+      if (email) {
+        const approved = await applyInvitationsOnAuth(email, userId);
+        if (approved && userStatus === 'pending') {
+          userStatus = 'active';
+        }
+      }
     } else {
       // Create new user
       const isSuperadmin = env.SUPERADMIN_EMAILS.split(',')
         .map((e) => e.trim().toLowerCase())
         .includes(email.toLowerCase());
+
+      // Check if this email has pending invitations (auto-approve if so)
+      const invited = await hasPendingInvitations(email);
 
       // Derive username from email prefix
       let baseUsername = email.split('@')[0].toLowerCase();
@@ -135,7 +153,7 @@ export const GET: RequestHandler = async (event) => {
       }
 
       userId = crypto.randomUUID();
-      userStatus = isSuperadmin ? 'active' : 'pending';
+      userStatus = isSuperadmin || invited ? 'active' : 'pending';
       const now = new Date().toISOString();
 
       await db.insert(usersTable).values({
@@ -148,9 +166,14 @@ export const GET: RequestHandler = async (event) => {
         authProvider: 'google',
         role: isSuperadmin ? 'admin' : 'user',
         status: userStatus,
-        approvedBy: isSuperadmin ? 'system' : null,
-        approvedAt: isSuperadmin ? now : null
+        approvedBy: isSuperadmin ? 'system' : invited ? 'invitation' : null,
+        approvedAt: isSuperadmin || invited ? now : null
       });
+
+      // Fulfill any pending invitations
+      if (invited) {
+        await applyInvitationsOnAuth(email, userId);
+      }
     }
   } else {
     throw error(400, 'Google account has no email. Cannot create user.');

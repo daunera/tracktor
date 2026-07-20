@@ -1,5 +1,4 @@
 /* eslint-disable no-redeclare */
-import { themes } from '$lib/config/themes';
 import { data as currencies } from 'currency-codes';
 import { getCurrencySymbol } from '$lib/helper/format.helper';
 import { z } from 'zod/v4';
@@ -38,7 +37,6 @@ export function createSettingsConfigSchema(
       mileageUnitFormat: z
         .enum(['distance-per-fuel', 'fuel-per-distance', 'uk-mpg'])
         .default('distance-per-fuel'),
-      theme: z.string().default('light'),
       customCss: z.string().optional(),
       featureFuelLog: z.boolean().default(true),
       featureMaintenance: z.boolean().default(true),
@@ -82,11 +80,6 @@ export function createSettingsOptions(
   };
 
   return {
-    themeOptions: Object.values(themes).map((theme) => ({
-      value: theme.name,
-      label: theme.label,
-      colorPreview: theme.colors?.primary || '#000'
-    })),
     currencyOptions: currencies.map((currency) => ({
       value: currency.code,
       label: `${getCurrencySymbol(currency.code)} - ${currency.currency} `
@@ -139,7 +132,6 @@ export function createSettingsFieldSectionMap(
     mileageUnitFormat: 'units',
     timezone: 'personalization',
     currency: 'personalization',
-    theme: 'personalization',
     customCss: 'personalization',
     featureFuelLog: 'features',
     featureMaintenance: 'features',

@@ -5,6 +5,7 @@ import { insuranceTable } from './insurance';
 import { maintenanceLogTable } from './maintenance-logs';
 import { vehicleTable } from './vehicle';
 import { vehicleShareTable } from './vehicle-share';
+import { invitationTable } from './invitation';
 import { pollutionCertificateTable } from './pucc';
 import { reminderTable } from './reminder';
 import { notificationTable } from './notification';
@@ -18,6 +19,7 @@ export {
   fuelLogTable,
   insuranceTable,
   maintenanceLogTable,
+  invitationTable,
   pollutionCertificateTable,
   vehicleTable,
   vehicleShareTable,

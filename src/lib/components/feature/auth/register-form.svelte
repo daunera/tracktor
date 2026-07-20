@@ -4,6 +4,7 @@
   import { authStore } from '$stores/auth.svelte';
   import { goto } from '$app/navigation';
   import UserIcon from '@lucide/svelte/icons/circle-user-round';
+  import MailIcon from '@lucide/svelte/icons/mail';
   import RectangleEllipsis from '@lucide/svelte/icons/rectangle-ellipsis';
   import SubmitButton from '$appui/SubmitButton.svelte';
   import LogIn from '@lucide/svelte/icons/log-in';
@@ -11,6 +12,7 @@
   import * as m from '$lib/paraglide/messages';
 
   let username = $state('');
+  let email = $state('');
   let password = $state('');
   let confirmPassword = $state('');
   let processing = $state(false);
@@ -22,7 +24,7 @@
 
   const handleRegister = async (event: Event) => {
     event.preventDefault();
-    if (!username || !password || !confirmPassword || processing) return;
+    if (!username || !email || !password || !confirmPassword || processing) return;
 
     if (password !== confirmPassword) {
       toast.error(m.auth_password_mismatch());
@@ -32,9 +34,13 @@
 
     processing = true;
     try {
-      const success = await authStore.register(username, password);
-      if (success) {
-        goto('/pending');
+      const result = await authStore.register(username, password, email);
+      if (result.success) {
+        if (result.autoApproved) {
+          goto('/dashboard');
+        } else {
+          goto('/pending');
+        }
       }
     } finally {
       processing = false;
@@ -84,6 +90,17 @@
             required
             bind:value={username}
             placeholder={m.auth_username_placeholder()}
+          />
+        </Field>
+        <Field>
+          <FieldLabel for="register-email">{m.auth_email()}</FieldLabel>
+          <Input
+            id="register-email"
+            icon={MailIcon}
+            type="email"
+            required
+            bind:value={email}
+            placeholder={m.auth_email_placeholder()}
           />
         </Field>
         <Field>

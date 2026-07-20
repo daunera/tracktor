@@ -12,6 +12,7 @@ export const getSharesForVehicle = async (vehicleId: string): Promise<ApiRespons
       userId: schema.vehicleShareTable.userId,
       username: schema.usersTable.username,
       name: schema.usersTable.name,
+      email: schema.usersTable.email,
       role: schema.vehicleShareTable.role,
       createdAt: schema.vehicleShareTable.created_at
     })
@@ -122,18 +123,44 @@ export const removeShare = async (shareId: string, currentUserId: string): Promi
     'Share not found'
   );
 
-  // Verify the current user owns the vehicle
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (v, { eq }) => eq(v.id, share.vehicleId)
   });
 
-  if (!vehicle || vehicle.userId !== currentUserId) {
-    throw new AppError('Only the vehicle owner can manage shares', Status.FORBIDDEN);
+  if (!vehicle) {
+    throw new AppError('Vehicle not found', Status.NOT_FOUND);
+  }
+
+  const isOwner = vehicle.userId === currentUserId;
+  const isSelf = share.userId === currentUserId;
+
+  if (!isOwner && !isSelf) {
+    throw new AppError('You are not allowed to remove this share', Status.FORBIDDEN);
   }
 
   await db.delete(schema.vehicleShareTable).where(eq(schema.vehicleShareTable.id, shareId));
 
   return createSuccessResponse(null, 'Share removed successfully');
+};
+
+export const getShareForUser = async (vehicleId: string, userId: string): Promise<ApiResponse> => {
+  const share = await db.query.vehicleShareTable.findFirst({
+    where: (s, { eq, and }) => and(eq(s.vehicleId, vehicleId), eq(s.userId, userId))
+  });
+
+  if (!share) {
+    throw new AppError('Share not found', Status.NOT_FOUND);
+  }
+
+  return createSuccessResponse(
+    {
+      id: share.id,
+      userId: share.userId,
+      role: share.role,
+      createdAt: share.created_at
+    },
+    'Share retrieved successfully'
+  );
 };
 
 export const transferOwnership = async (

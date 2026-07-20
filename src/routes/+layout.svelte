@@ -10,6 +10,7 @@
   import { navigating, page } from '$app/state';
   import { goto } from '$app/navigation';
   import Header from '$layout/Header.svelte';
+  import AppSheet from '$layout/AppSheet.svelte';
   import { onMount } from 'svelte';
   import { env } from '$lib/config/env';
   import { toast } from 'svelte-sonner';
@@ -158,6 +159,7 @@
     <main class="flex-1">{@render children()}</main>
   </div>
 {/if}
+<AppSheet />
 <div style="display:none">
   {#each locales as locale (locale)}
     <a href={localizeHref(page.url.pathname, { locale })}>

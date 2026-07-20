@@ -1,7 +1,6 @@
 <script lang="ts">
   import SettingsSection from '$lib/components/feature/settings/SettingsSection.svelte';
   import { configStore } from '$stores/config.svelte';
-  import { themeStore } from '$lib/stores/theme.svelte';
   import LeftArrow from '@lucide/svelte/icons/move-left';
   import SubmitButton from '$appui/SubmitButton.svelte';
   import { toast } from 'svelte-sonner';
@@ -25,7 +24,9 @@
   import SettingsPersonalizationTab from '$feature/settings/SettingsPersonalizationTab.svelte';
   import SettingsUnitsTab from '$feature/settings/SettingsUnitsTab.svelte';
   import SettingsUsersTab from '$feature/settings/SettingsUsersTab.svelte';
+  import DataExportImport from '$feature/data-export-import/DataExportImport.svelte';
   import Button from '$lib/components/ui/button/button.svelte';
+  import Wrench from '@lucide/svelte/icons/wrench';
   import { goto } from '$app/navigation';
   import SettingFormSection from '$lib/components/feature/settings/SettingFormSection.svelte';
 
@@ -43,11 +44,6 @@
     resetForm: false,
     onUpdated: async ({ form: f }) => {
       if (f.valid) {
-        // Handle theme change
-        if (f.data.theme) {
-          themeStore.setTheme(f.data.theme as any);
-        }
-
         const updatedConfig = formDataToConfigs(f.data as SettingsFormShape, configStore.rawConfig);
 
         // Persist configuration before applying a locale change
@@ -102,7 +98,6 @@
   );
 
   const {
-    themeOptions,
     currencyOptions,
     uodOptions,
     uovOptions,
@@ -136,6 +131,11 @@
       id: 'users',
       label: m.settings_tab_users(),
       icon: Users
+    },
+    {
+      id: 'tools',
+      label: m.settings_tab_tools(),
+      icon: Wrench
     }
   ]);
 
@@ -151,8 +151,6 @@
         configStore.rawConfig,
         configStore.configs
       ) as SettingsFormShape;
-      // Add current theme to form data (theme is client-side only)
-      configData.theme = themeStore.theme;
       notificationProcessingEnabled = configData.notificationProcessingEnabled !== false;
       formData.set(configData);
     }
@@ -239,7 +237,6 @@
                   {form}
                   {formData}
                   {processing}
-                  {themeOptions}
                   {localeOptions}
                   {currencyOptions}
                   {getTimezoneOptions}
@@ -321,6 +318,16 @@
           </SettingsSection>
         {/if}
 
+        <!-- Tools Section -->
+        {#if activeSection === 'tools'}
+          <SettingsSection
+            title={m.settings_tab_tools()}
+            description={m.data_export_import_sheet_desc()}
+          >
+            <DataExportImport />
+          </SettingsSection>
+        {/if}
+
         <!-- Submit Button (always visible at bottom) -->
         <div class="mt-6 flex flex-col gap-4 pt-6">
           <!-- Error Summary -->
@@ -342,7 +349,7 @@
             </div>
           {/if}
 
-          {#if activeSection !== 'notifications' && activeSection !== 'users'}
+          {#if activeSection !== 'notifications' && activeSection !== 'users' && activeSection !== 'tools'}
             <div class="flex justify-end">
               <SubmitButton {processing} class="w-full sm:w-auto">
                 {m.settings_update_button()}

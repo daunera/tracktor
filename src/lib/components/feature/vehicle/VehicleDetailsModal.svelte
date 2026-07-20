@@ -4,7 +4,6 @@
   import { Separator } from '$ui/separator';
   import IdCard from '@lucide/svelte/icons/id-card';
   import FileText from '@lucide/svelte/icons/file-text';
-  import User from '@lucide/svelte/icons/user';
   import { formatDistance } from '$lib/helper/format.helper';
   import { getFuelTypeLabel } from '$lib/domain/vehicle';
   import type { Vehicle } from '$lib/domain/vehicle';

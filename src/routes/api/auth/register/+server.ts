@@ -10,8 +10,8 @@ export const POST: RequestHandler = async (event) => {
     const body = event.locals.requestBody || (await event.request.json());
 
     // Validate request body
-    if (!body.username || !body.password) {
-      throw error(400, 'Username and password are required');
+    if (!body.username || !body.password || !body.email) {
+      throw error(400, 'Username, email, and password are required');
     }
 
     // Basic validation
@@ -23,9 +23,15 @@ export const POST: RequestHandler = async (event) => {
       throw error(400, 'Password must be at least 6 characters long');
     }
 
-    const result = await authService.createUser(body.username, body.password);
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.email)) {
+      throw error(400, 'Invalid email format');
+    }
 
-    // Set session cookie so the pending page can identify this user
+    const result = await authService.createUser(body.username, body.password, body.email);
+
+    // Set session cookie so the user is logged in
     if (result.data?.sessionToken) {
       event.cookies.set('session', result.data.sessionToken, {
         path: '/',

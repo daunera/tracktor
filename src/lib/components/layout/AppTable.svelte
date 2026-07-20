@@ -83,6 +83,8 @@
   });
 
   const visiblePages = $derived(getVisiblePageItems(table));
+
+  const getColumnClass = (meta: unknown) => (meta as { className?: string } | undefined)?.className;
 </script>
 
 <div id="app-table-container">
@@ -135,7 +137,10 @@
           {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
             <Table.Row>
               {#each headerGroup.headers as header (header.id)}
-                <Table.Head colspan={header.colSpan}>
+                <Table.Head
+                  colspan={header.colSpan}
+                  class={getColumnClass(header.column.columnDef.meta)}
+                >
                   {#if !header.isPlaceholder}
                     <FlexRender
                       content={header.column.columnDef.header}
@@ -151,7 +156,7 @@
           {#each table.getRowModel().rows as row (row.id)}
             <Table.Row data-state={row.getIsSelected() && 'selected'}>
               {#each row.getVisibleCells() as cell (cell.id)}
-                <Table.Cell>
+                <Table.Cell class={getColumnClass(cell.column.columnDef.meta)}>
                   <FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
                 </Table.Cell>
               {/each}

@@ -9,14 +9,12 @@
   import Currency from '@lucide/svelte/icons/currency';
   import Earth from '@lucide/svelte/icons/earth';
   import Languages from '@lucide/svelte/icons/languages';
-  import Palette from '@lucide/svelte/icons/palette';
   import SettingsSelectField from './SettingsSelectField.svelte';
 
   interface Props {
     form: any;
     formData: any;
     processing: boolean;
-    themeOptions: Array<SettingsOption>;
     localeOptions: Array<SettingsOption>;
     currencyOptions: Array<SettingsOption>;
     getTimezoneOptions: () => Array<SettingsOption>;
@@ -28,7 +26,6 @@
     form,
     formData,
     processing,
-    themeOptions,
     localeOptions,
     currencyOptions,
     getTimezoneOptions,
@@ -38,17 +35,6 @@
 </script>
 
 <fieldset class="grid gap-4 lg:grid-cols-3" disabled={processing}>
-  <SettingsSelectField
-    {form}
-    name="theme"
-    label={m.settings_label_theme()}
-    description={m.settings_desc_theme()}
-    icon={Palette}
-    options={themeOptions}
-    placeholder={m.settings_select_theme()}
-    bind:value={$formData.theme}
-    disabled={processing}
-  />
   <SettingsSelectField
     {form}
     name="locale"

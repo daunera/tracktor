@@ -3,7 +3,7 @@ import { AppError } from '../exceptions/AppError';
 import { Status } from '../exceptions/AppError';
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { type ApiResponse } from '$lib/response';
 import {
   generateSessionToken,
@@ -14,40 +14,61 @@ import {
 } from '../utils/session';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
 import { env } from '$lib/config/env.server';
+import { hasPendingInvitations, applyInvitationsOnAuth } from './invitationService';
 
-export const createUser = async (username: string, password: string): Promise<ApiResponse> => {
+export const createUser = async (
+  username: string,
+  password: string,
+  email: string
+): Promise<ApiResponse> => {
   if (env.DISABLE_PASSWORD_LOGIN) {
     throw new AppError('Password login is disabled.', Status.BAD_REQUEST);
   }
 
-  // Check if user already exists
+  // Check if username or email already exists
   const existingUser = await db.query.usersTable.findFirst({
-    where: (users, { eq }) => eq(users.username, username)
+    where: (users, { or, eq }) => or(eq(users.username, username), eq(users.email, email))
   });
 
   if (existingUser) {
-    throw new AppError('Username already exists', Status.BAD_REQUEST);
+    if (existingUser.username === username) {
+      throw new AppError('Username already exists', Status.BAD_REQUEST);
+    }
+    throw new AppError('Email already exists', Status.BAD_REQUEST);
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
   const userId = crypto.randomUUID();
 
-  // Password users always start as pending (superadmin auto-approval is for Google/email users only)
+  // Check if this email has pending invitations
+  const invited = email ? await hasPendingInvitations(email) : false;
+  const now = new Date().toISOString();
+
   await db.insert(schema.usersTable).values({
     id: userId,
     username,
     passwordHash,
+    email,
     authProvider: 'password',
-    status: 'pending'
+    status: invited ? 'active' : 'pending',
+    approvedBy: invited ? 'invitation' : null,
+    approvedAt: invited ? now : null
   });
 
-  // Create a session so the pending page can identify the user
+  // Create a session so the user can log in directly
   const sessionToken = generateSessionToken();
   await createSession(sessionToken, userId);
 
+  // Fulfill any pending invitations
+  if (email) {
+    await applyInvitationsOnAuth(email, userId);
+  }
+
   return createSuccessResponse(
-    { userId, username, sessionToken },
-    'User created successfully. Pending approval.'
+    { userId, username, sessionToken, autoApproved: invited },
+    invited
+      ? 'User created and auto-approved via invitation.'
+      : 'User created successfully. Pending approval.'
   );
 };
 
@@ -109,10 +130,24 @@ export const loginUser = async (username: string, password: string): Promise<Api
 
   // Check user status
   if (user.status === 'pending') {
-    throw new AppError(
-      'Your registration is pending approval. Please wait for an administrator to approve your account.',
-      Status.FORBIDDEN
-    );
+    if (user.email) {
+      const approved = await applyInvitationsOnAuth(user.email, user.id);
+      if (approved) {
+        user.status = 'active';
+      } else {
+        throw new AppError(
+          'Your registration is pending approval. Please wait for an administrator to approve your account.',
+          Status.FORBIDDEN
+        );
+      }
+    } else {
+      throw new AppError(
+        'Your registration is pending approval. Please wait for an administrator to approve your account.',
+        Status.FORBIDDEN
+      );
+    }
+  } else if (user.status === 'active' && user.email) {
+    await applyInvitationsOnAuth(user.email, user.id);
   }
 
   if (user.status === 'rejected') {
@@ -166,7 +201,12 @@ export const getUsersCount = async (): Promise<ApiResponse> => {
 
 export const updateUserProfile = async (
   userId: string,
-  data: { currentPassword?: string; newPassword?: string }
+  data: {
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }
 ): Promise<ApiResponse> => {
   const user = requireRecord(
     await db.query.usersTable.findFirst({
@@ -175,7 +215,26 @@ export const updateUserProfile = async (
     'User not found'
   );
 
-  const updates: { passwordHash?: string } = {};
+  const updates: { name?: string | null; email?: string | null; passwordHash?: string } = {};
+
+  // Handle name update (only for password users)
+  if (data.name !== undefined && user.authProvider === 'password') {
+    updates.name = data.name || null;
+  }
+
+  // Handle email update (only for password users)
+  if (data.email !== undefined && user.authProvider === 'password') {
+    // Check email uniqueness
+    if (data.email) {
+      const existingWithEmail = await db.query.usersTable.findFirst({
+        where: (users, { eq, and, ne }) => and(eq(users.email, data.email!), ne(users.id, userId))
+      });
+      if (existingWithEmail) {
+        throw new AppError('Email already in use', Status.BAD_REQUEST);
+      }
+    }
+    updates.email = data.email || null;
+  }
 
   // Handle password update
   if (data.newPassword) {
@@ -202,7 +261,7 @@ export const updateUserProfile = async (
   await db.update(schema.usersTable).set(updates).where(eq(schema.usersTable.id, userId));
 
   return createSuccessResponse(
-    { id: user.id, username: user.username },
+    { id: user.id, username: user.username, name: updates.name, email: updates.email },
     'Profile updated successfully'
   );
 };
@@ -407,17 +466,22 @@ export const unblockUser = async (
 };
 
 export const searchUsers = async (query: string): Promise<ApiResponse> => {
+  // Exact email match only — for sharing invitations
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(query)) {
+    return createSuccessResponse([], 'Query must be a valid email address');
+  }
+
   const users = await db
     .select({
       id: schema.usersTable.id,
       username: schema.usersTable.username,
-      name: schema.usersTable.name
+      name: schema.usersTable.name,
+      email: schema.usersTable.email
     })
     .from(schema.usersTable)
-    .where(
-      sql`(${schema.usersTable.username} LIKE ${`%${query}%`} OR ${schema.usersTable.name} LIKE ${`%${query}%`}) AND ${schema.usersTable.status} = 'active'`
-    )
-    .limit(20);
+    .where(and(eq(schema.usersTable.email, query), eq(schema.usersTable.status, 'active')))
+    .limit(1);
 
   return createSuccessResponse(users, 'Users retrieved successfully');
 };

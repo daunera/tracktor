@@ -6,7 +6,6 @@
   import * as Tabs from '$ui/tabs';
   import { configStore } from '$stores/config.svelte';
   import { themeStore } from '$lib/stores/theme.svelte';
-  import { themes } from '$lib/config/themes';
   import SubmitButton from '$appui/SubmitButton.svelte';
   import { toast } from 'svelte-sonner';
   import { superForm, defaults } from 'sveltekit-superforms';
@@ -199,12 +198,6 @@
     label: localeLabels[code] || code.toUpperCase()
   }));
 
-  const themeOptions = Object.values(themes).map((theme) => ({
-    value: theme.name,
-    label: theme.label,
-    colorPreview: theme.colors?.primary || '#000'
-  }));
-
   $effect(() => {
     if (localConfig.length > 0) {
       const configData: any = {};
@@ -269,7 +262,6 @@
                   {form}
                   {formData}
                   {processing}
-                  {themeOptions}
                   {localeOptions}
                   {currencyOptions}
                   {getTimezoneOptions}
