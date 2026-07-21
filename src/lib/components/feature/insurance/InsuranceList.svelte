@@ -119,30 +119,24 @@
       {/if}
       {#if ins.attachment}
         {@const fileName = ins.attachment}
-        <RecordDetailItem
-          label={m.insurance_form_attachment_label()}
-          icon={Paperclip}
-          class="md:col-span-2"
-        >
+        <RecordDetailItem label={m.insurance_form_attachment_label()} icon={Paperclip}>
           <AttachmentLink {fileName}>
             <span class="text-sm">{m.insurance_col_view_document()}</span>
           </AttachmentLink>
         </RecordDetailItem>
       {/if}
-
+      {#if ins.attachmentPassword}
+        <RecordDetailItem
+          label={m.insurance_form_attachment_password_label()}
+          value={ins.attachmentPassword}
+          icon={Lock}
+        />
+      {/if}
       {#if ins.classification}
         <RecordDetailItem
           label={m.insurance_form_classification_label()}
           value={ins.classification}
           icon={ShieldCheck}
-        />
-      {/if}
-
-      {#if ins.policyDocumentPassword}
-        <RecordDetailItem
-          label={m.insurance_form_policy_document_password_label()}
-          value={'•'.repeat(8)}
-          icon={Lock}
         />
       {/if}
     </FeatureRecordCard>

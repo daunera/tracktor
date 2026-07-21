@@ -12,7 +12,9 @@
     insuranceSchema,
     INSURANCE_RECURRENCE_TYPES,
     getInsuranceRecurrenceTypeLabel,
-    BONUS_MALUS_TYPES
+    BONUS_MALUS_TYPES,
+    getNextBonusMalus,
+    type BonusMalusType
   } from '$lib/domain/insurance';
   import * as Select from '$ui/select/index.js';
   import Repeat from '@lucide/svelte/icons/repeat';
@@ -56,7 +58,8 @@
             ...f.data,
             startDate: parseDate(f.data.startDate),
             endDate:
-              f.data.recurrenceType !== 'none' || !f.data.endDate ? null : parseDate(f.data.endDate)
+              f.data.recurrenceType !== 'none' || !f.data.endDate ? null : parseDate(f.data.endDate),
+            classification: (f.data.classification || null) as BonusMalusType | null
           },
           attachment,
           removeExistingAttachment
@@ -90,6 +93,18 @@
       // Reset attachment state when editing existing record
       attachment = undefined;
       removeExistingAttachment = false;
+    } else {
+      // New insurance: infer default bonus-malus from the most recent policy
+      const last = insuranceStore.insurances
+        ?.toSorted((a, b) => {
+          const aDate = new Date(a.endDate ?? a.startDate);
+          const bDate = new Date(b.endDate ?? b.startDate);
+          return bDate.getTime() - aDate.getTime();
+        })
+        .at(0);
+      if (last) {
+        formData.update((fd) => ({ ...fd, classification: getNextBonusMalus(last.classification) }));
+      }
     }
     formData.update((fd) => {
       return {
@@ -126,18 +141,13 @@
       </Form.Control>
     </Form.Field>
 
-    <Form.Field {form} name="policyDocumentPassword" class="w-full">
+    <Form.Field {form} name="attachmentPassword" class="w-full">
       <Form.Control>
         {#snippet children({ props })}
-          <FormLabel description={m.insurance_form_policy_document_password_desc()}
-            >{m.insurance_form_policy_document_password_label()}</FormLabel
+          <FormLabel description={m.insurance_form_attachment_password_desc()}
+            >{m.insurance_form_attachment_password_label()}</FormLabel
           >
-          <Input
-            {...props}
-            bind:value={$formData.policyDocumentPassword}
-            icon={Lock}
-            type="password"
-          />
+          <Input {...props} bind:value={$formData.attachmentPassword} icon={Lock} />
         {/snippet}
       </Form.Control>
       <Form.FieldErrors />
@@ -280,7 +290,7 @@
           <FormLabel description={m.insurance_form_classification_desc()}
             >{m.insurance_form_classification_label()}</FormLabel
           >
-          <Select.Root bind:value={$formData.classification} type="single">
+          <Select.Root bind:value={$formData.classification as never} type="single">
             <Select.Trigger {...props} class="w-full">
               <div class="flex items-center gap-2">
                 <ShieldCheck class="h-4 w-4" />

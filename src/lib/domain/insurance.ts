@@ -10,22 +10,36 @@ export const INSURANCE_RECURRENCE_TYPES = {
 
 export const BONUS_MALUS_TYPES = [
   'B10',
-  'B9',
-  'B8',
-  'B7',
-  'B6',
-  'B5',
-  'B4',
-  'B3',
-  'B2',
-  'B1',
-  'M1',
-  'M2',
-  'M3',
-  'M4'
+  'B09',
+  'B08',
+  'B07',
+  'B06',
+  'B05',
+  'B04',
+  'B03',
+  'B02',
+  'B01',
+  'A00',
+  'M01',
+  'M02',
+  'M03',
+  'M04'
 ] as const;
 
 export type BonusMalusType = (typeof BONUS_MALUS_TYPES)[number];
+
+/**
+ * Returns the next (improved) bonus-malus level for a new insurance policy.
+ * - `'A00'` is returned when there's no previous classification.
+ * - The level improves by one step toward `'B10'` (best).
+ * - Already at `'B10'` stays at `'B10'`.
+ */
+export function getNextBonusMalus(current: BonusMalusType | null): BonusMalusType {
+  if (!current) return 'A00';
+  const index = BONUS_MALUS_TYPES.indexOf(current);
+  if (index <= 0) return BONUS_MALUS_TYPES[0]; // already at best (B10)
+  return BONUS_MALUS_TYPES[index - 1]; // improve by one level
+}
 
 // Helper function to get localized insurance recurrence type label
 export function getInsuranceRecurrenceTypeLabel(type: string, m: any): string {
@@ -56,7 +70,7 @@ export interface Insurance {
   notes: string | null;
   attachment: string | null;
   classification: BonusMalusType | null;
-  policyDocumentPassword: string | null;
+  attachmentPassword: string | null;
 }
 
 const insuranceRecurrenceOptions = Object.keys(
@@ -98,7 +112,7 @@ export const insuranceSchema = z.object({
   classification: z
     .enum([...BONUS_MALUS_TYPES] as [BonusMalusType, ...BonusMalusType[]])
     .nullable(),
-  policyDocumentPassword: z.string().nullable()
+  attachmentPassword: z.string().nullable()
 });
 
 export type InsuranceSchema = typeof insuranceSchema;

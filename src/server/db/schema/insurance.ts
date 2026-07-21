@@ -20,7 +20,7 @@ export const insuranceTable = table('insurances', {
   recurrenceInterval: t.integer().notNull().default(1),
   cost: t.real().notNull(),
   classification: t.text(),
-  policyDocumentPassword: t.text(),
+  attachmentPassword: t.text(),
   notes: t.text(),
   attachment: t.text(),
   ...timestamps,

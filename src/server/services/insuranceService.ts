@@ -16,7 +16,7 @@ type InsurancePayload = {
   recurrenceInterval: number;
   cost: number;
   classification: Insurance['classification'];
-  policyDocumentPassword: Insurance['policyDocumentPassword'];
+  attachmentPassword: Insurance['attachmentPassword'];
   notes: string | null;
   attachment: string | null;
 };
