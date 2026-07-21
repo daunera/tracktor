@@ -11,7 +11,8 @@
   import {
     insuranceSchema,
     INSURANCE_RECURRENCE_TYPES,
-    getInsuranceRecurrenceTypeLabel
+    getInsuranceRecurrenceTypeLabel,
+    BONUS_MALUS_TYPES
   } from '$lib/domain/insurance';
   import * as Select from '$ui/select/index.js';
   import Repeat from '@lucide/svelte/icons/repeat';
@@ -21,6 +22,8 @@
   import Calendar1 from '@lucide/svelte/icons/calendar-1';
   import IdCard from '@lucide/svelte/icons/id-card';
   import Building2 from '@lucide/svelte/icons/building-2';
+  import Lock from '@lucide/svelte/icons/lock';
+  import ShieldCheck from '@lucide/svelte/icons/shield-check';
   import SubmitButton from '$appui/SubmitButton.svelte';
   import { toast } from 'svelte-sonner';
   import { superForm, defaults } from 'sveltekit-superforms';
@@ -122,6 +125,24 @@
         />
       </Form.Control>
     </Form.Field>
+
+    <Form.Field {form} name="policyDocumentPassword" class="w-full">
+      <Form.Control>
+        {#snippet children({ props })}
+          <FormLabel description={m.insurance_form_policy_document_password_desc()}
+            >{m.insurance_form_policy_document_password_label()}</FormLabel
+          >
+          <Input
+            {...props}
+            bind:value={$formData.policyDocumentPassword}
+            icon={Lock}
+            type="password"
+          />
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
+
     <Form.Field {form} name="provider" class="w-full">
       <Form.Control>
         {#snippet children({ props })}
@@ -252,6 +273,33 @@
       </Form.Control>
       <Form.FieldErrors />
     </Form.Field>
+
+    <Form.Field {form} name="classification" class="w-full">
+      <Form.Control>
+        {#snippet children({ props })}
+          <FormLabel description={m.insurance_form_classification_desc()}
+            >{m.insurance_form_classification_label()}</FormLabel
+          >
+          <Select.Root bind:value={$formData.classification} type="single">
+            <Select.Trigger {...props} class="w-full">
+              <div class="flex items-center gap-2">
+                <ShieldCheck class="h-4 w-4" />
+                <span>
+                  {$formData.classification || m.insurance_form_classification_placeholder()}
+                </span>
+              </div>
+            </Select.Trigger>
+            <Select.Content>
+              {#each BONUS_MALUS_TYPES as value}
+                <Select.Item {value}>{value}</Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+        {/snippet}
+      </Form.Control>
+      <Form.FieldErrors />
+    </Form.Field>
+
     <SubmitButton {processing} class="w-full">{m.common_submit()}</SubmitButton>
   </fieldset>
 </form>

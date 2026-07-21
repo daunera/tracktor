@@ -19,6 +19,8 @@ export const insuranceTable = table('insurances', {
   recurrenceType: t.text().notNull().default('none'),
   recurrenceInterval: t.integer().notNull().default(1),
   cost: t.real().notNull(),
+  classification: t.text(),
+  policyDocumentPassword: t.text(),
   notes: t.text(),
   attachment: t.text(),
   ...timestamps,

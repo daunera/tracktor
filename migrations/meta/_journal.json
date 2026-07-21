@@ -141,6 +141,13 @@
       "when": 1776864000000,
       "tag": "20260711180000_add_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1784644800000,
+      "tag": "20260721120000_add_insurance_classification_password",
+      "breakpoints": true
     }
   ]
 }

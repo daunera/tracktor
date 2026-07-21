@@ -8,6 +8,25 @@ export const INSURANCE_RECURRENCE_TYPES = {
   no_end: 'no_end'
 } as const;
 
+export const BONUS_MALUS_TYPES = [
+  'B10',
+  'B9',
+  'B8',
+  'B7',
+  'B6',
+  'B5',
+  'B4',
+  'B3',
+  'B2',
+  'B1',
+  'M1',
+  'M2',
+  'M3',
+  'M4'
+] as const;
+
+export type BonusMalusType = (typeof BONUS_MALUS_TYPES)[number];
+
 // Helper function to get localized insurance recurrence type label
 export function getInsuranceRecurrenceTypeLabel(type: string, m: any): string {
   switch (type) {
@@ -36,6 +55,8 @@ export interface Insurance {
   cost: number;
   notes: string | null;
   attachment: string | null;
+  classification: BonusMalusType | null;
+  policyDocumentPassword: string | null;
 }
 
 const insuranceRecurrenceOptions = Object.keys(
@@ -73,7 +94,11 @@ export const insuranceSchema = z.object({
   recurrenceInterval: z.number().int().positive().default(1),
   cost: z.float32().positive(),
   notes: z.string().nullable(),
-  attachment: z.string().nullable()
+  attachment: z.string().nullable(),
+  classification: z
+    .enum([...BONUS_MALUS_TYPES] as [BonusMalusType, ...BonusMalusType[]])
+    .nullable(),
+  policyDocumentPassword: z.string().nullable()
 });
 
 export type InsuranceSchema = typeof insuranceSchema;

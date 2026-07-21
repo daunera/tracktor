@@ -1,10 +1,12 @@
 <script lang="ts">
   import Shield from '@lucide/svelte/icons/shield';
+  import ShieldCheck from '@lucide/svelte/icons/shield-check';
   import Calendar from '@lucide/svelte/icons/calendar';
   import Hash from '@lucide/svelte/icons/hash';
   import Notebook from '@lucide/svelte/icons/notebook';
   import Banknote from '@lucide/svelte/icons/banknote';
   import Paperclip from '@lucide/svelte/icons/paperclip';
+  import Lock from '@lucide/svelte/icons/lock';
   import Repeat from '@lucide/svelte/icons/repeat';
   import AttachmentLink from '$lib/components/app/AttachmentLink.svelte';
   import FeatureRecordCard from '$appui/FeatureRecordCard.svelte';
@@ -117,11 +119,31 @@
       {/if}
       {#if ins.attachment}
         {@const fileName = ins.attachment}
-        <RecordDetailItem label={m.col_attachment()} icon={Paperclip} class="md:col-span-2">
+        <RecordDetailItem
+          label={m.insurance_form_attachment_label()}
+          icon={Paperclip}
+          class="md:col-span-2"
+        >
           <AttachmentLink {fileName}>
             <span class="text-sm">{m.insurance_col_view_document()}</span>
           </AttachmentLink>
         </RecordDetailItem>
+      {/if}
+
+      {#if ins.classification}
+        <RecordDetailItem
+          label={m.insurance_form_classification_label()}
+          value={ins.classification}
+          icon={ShieldCheck}
+        />
+      {/if}
+
+      {#if ins.policyDocumentPassword}
+        <RecordDetailItem
+          label={m.insurance_form_policy_document_password_label()}
+          value={'•'.repeat(8)}
+          icon={Lock}
+        />
       {/if}
     </FeatureRecordCard>
   {/each}
