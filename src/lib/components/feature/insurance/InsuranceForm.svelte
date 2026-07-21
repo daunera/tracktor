@@ -58,7 +58,9 @@
             ...f.data,
             startDate: parseDate(f.data.startDate),
             endDate:
-              f.data.recurrenceType !== 'none' || !f.data.endDate ? null : parseDate(f.data.endDate),
+              f.data.recurrenceType !== 'none' || !f.data.endDate
+                ? null
+                : parseDate(f.data.endDate),
             classification: (f.data.classification || null) as BonusMalusType | null
           },
           attachment,
@@ -103,7 +105,10 @@
         })
         .at(0);
       if (last) {
-        formData.update((fd) => ({ ...fd, classification: getNextBonusMalus(last.classification) }));
+        formData.update((fd) => ({
+          ...fd,
+          classification: getNextBonusMalus(last.classification)
+        }));
       }
     }
     formData.update((fd) => {
