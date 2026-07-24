@@ -21,7 +21,11 @@ export const PUT: RequestHandler = async (event) => {
       recurrenceInterval: parsed.recurrenceInterval ?? 1
     };
     const { id: _, vehicleId: __, ...payload } = body;
-    const result = await pollutionCertificateService.updatePollutionCertificate(id, puccId, payload as any);
+    const result = await pollutionCertificateService.updatePollutionCertificate(
+      id,
+      puccId,
+      payload as any
+    );
     return jsonResponse(result);
   });
 };

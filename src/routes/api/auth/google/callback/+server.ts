@@ -2,10 +2,7 @@ import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
 import { syncSuperadminRole } from '$server/services/authService';
-import {
-  hasPendingInvitations,
-  applyInvitationsOnAuth
-} from '$server/services/invitationService';
+import { hasPendingInvitations, applyInvitationsOnAuth } from '$server/services/invitationService';
 import { env, isHttps } from '$lib/config/env.server';
 import { db } from '$server/db/index';
 import { usersTable } from '$server/db/schema/index';

@@ -83,46 +83,41 @@ export const getAllVehicles = async (userId?: string) => {
     ? await vehiclesQuery.where(inArray(schema.vehicleTable.id, accessibleIds))
     : await vehiclesQuery;
 
-  const [
-    insurances,
-    pollutionCerts,
-    maxFuelOdometerRows,
-    maxMaintenanceOdometerRows,
-    allFuelLogs
-  ] = await Promise.all([
-    db.query.insuranceTable.findMany({
-      columns: { vehicleId: true, endDate: true }
-    }),
-    db.query.pollutionCertificateTable.findMany({
-      columns: { vehicleId: true, expiryDate: true }
-    }),
-    db
-      .select({
-        vehicleId: schema.fuelLogTable.vehicleId,
-        maxOdometer: sql<number>`MAX(${schema.fuelLogTable.odometer})`.as('max_odometer')
+  const [insurances, pollutionCerts, maxFuelOdometerRows, maxMaintenanceOdometerRows, allFuelLogs] =
+    await Promise.all([
+      db.query.insuranceTable.findMany({
+        columns: { vehicleId: true, endDate: true }
+      }),
+      db.query.pollutionCertificateTable.findMany({
+        columns: { vehicleId: true, expiryDate: true }
+      }),
+      db
+        .select({
+          vehicleId: schema.fuelLogTable.vehicleId,
+          maxOdometer: sql<number>`MAX(${schema.fuelLogTable.odometer})`.as('max_odometer')
+        })
+        .from(schema.fuelLogTable)
+        .where(sql`${schema.fuelLogTable.odometer} IS NOT NULL`)
+        .groupBy(schema.fuelLogTable.vehicleId),
+      db
+        .select({
+          vehicleId: schema.maintenanceLogTable.vehicleId,
+          maxOdometer: sql<number>`MAX(${schema.maintenanceLogTable.odometer})`.as('max_odometer')
+        })
+        .from(schema.maintenanceLogTable)
+        .where(sql`${schema.maintenanceLogTable.odometer} IS NOT NULL`)
+        .groupBy(schema.maintenanceLogTable.vehicleId),
+      db.query.fuelLogTable.findMany({
+        columns: {
+          vehicleId: true,
+          filled: true,
+          missedLast: true,
+          odometer: true,
+          fuelAmount: true
+        },
+        orderBy: (log, { asc }) => [asc(log.date), asc(log.odometer)]
       })
-      .from(schema.fuelLogTable)
-      .where(sql`${schema.fuelLogTable.odometer} IS NOT NULL`)
-      .groupBy(schema.fuelLogTable.vehicleId),
-    db
-      .select({
-        vehicleId: schema.maintenanceLogTable.vehicleId,
-        maxOdometer: sql<number>`MAX(${schema.maintenanceLogTable.odometer})`.as('max_odometer')
-      })
-      .from(schema.maintenanceLogTable)
-      .where(sql`${schema.maintenanceLogTable.odometer} IS NOT NULL`)
-      .groupBy(schema.maintenanceLogTable.vehicleId),
-    db.query.fuelLogTable.findMany({
-      columns: {
-        vehicleId: true,
-        filled: true,
-        missedLast: true,
-        odometer: true,
-        fuelAmount: true
-      },
-      orderBy: (log, { asc }) => [asc(log.date), asc(log.odometer)]
-    })
-  ]);
+    ]);
 
   const maxFuelOdometer = new Map(maxFuelOdometerRows.map((r) => [r.vehicleId, r.maxOdometer]));
   const maxMaintenanceOdometer = new Map(

@@ -14,7 +14,8 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const vehicle = await vehicleService.getVehicleById(vehicleId);
-    const vehicleData = vehicle.data as { make?: string; model?: string; licensePlate?: string } | undefined;
+    const vehicleData = vehicle.data as
+      { make?: string; model?: string; licensePlate?: string } | undefined;
 
     const maintenanceLogs = await maintenanceLogService.getMaintenanceLogs(vehicleId);
 

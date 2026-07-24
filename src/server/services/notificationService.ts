@@ -16,7 +16,6 @@ import {
   sortNotificationsByDueDate,
   type GeneratedNotification
 } from './notification-service.helper';
-import { AppError, Status } from '$server/exceptions/AppError';
 import { getAppConfigByKey } from './configService';
 import * as m from '$lib/paraglide/messages';
 import { createSuccessResponse, createFailureResponse } from './service-response.helper';

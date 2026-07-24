@@ -3,19 +3,17 @@ import { db } from '../db/index';
 import { createOwnedEntityService } from '../utils/entity-service-factory';
 import type { z } from 'zod';
 import { maintenanceSchema } from '$lib/domain/maintenance';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { createSuccessResponse } from './service-response.helper';
 import type { ApiResponse } from '$lib/response';
 import { eq } from 'drizzle-orm';
 
 type MaintenanceLogPayload = Omit<z.infer<typeof maintenanceSchema>, 'id' | 'vehicleId'>;
 type MaintenanceLogUpdatePayload = Partial<MaintenanceLogPayload>;
 
-const entityService = createOwnedEntityService<MaintenanceLogPayload, MaintenanceLogUpdatePayload>(
-  {
-    table: schema.maintenanceLogTable,
-    entityName: 'Maintenance log'
-  }
-);
+const entityService = createOwnedEntityService<MaintenanceLogPayload, MaintenanceLogUpdatePayload>({
+  table: schema.maintenanceLogTable,
+  entityName: 'Maintenance log'
+});
 
 export const addMaintenanceLog = async (
   vehicleId: string,
