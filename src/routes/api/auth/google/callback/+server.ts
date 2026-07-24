@@ -3,7 +3,7 @@ import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
 import { syncSuperadminRole } from '$server/services/authService';
 import {
-  hasPendingAppInvitation,
+  hasPendingInvitations,
   applyInvitationsOnAuth
 } from '$server/services/invitationService';
 import { env, isHttps } from '$lib/config/env.server';
@@ -134,15 +134,12 @@ export const GET: RequestHandler = async (event) => {
         }
       }
     } else {
-      // Check if this email has a pending app invitation
-      const invited = await hasPendingAppInvitation(email);
+      // Check if this email has any pending invitation (app or vehicle)
+      const invited = await hasPendingInvitations(email);
 
       if (!invited) {
         // No invitation — redirect to login with error
-        throw redirect(
-          302,
-          '/login?reason=no_invitation&message=An+invitation+is+required+to+access+the+application.+Please+ask+an+administrator+for+an+invitation.'
-        );
+        throw redirect(302, '/login?reason=no_invitation');
       }
 
       // Create new user
@@ -207,7 +204,7 @@ export const GET: RequestHandler = async (event) => {
   }
 
   if (userStatus === 'rejected') {
-    throw redirect(302, '/login?reason=rejected&message=Your+account+has+been+blocked.');
+    throw redirect(302, '/login?reason=rejected');
   }
 
   throw redirect(302, '/dashboard');

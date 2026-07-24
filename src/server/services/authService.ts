@@ -14,7 +14,7 @@ import {
 } from '../utils/session';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
 import { env } from '$lib/config/env.server';
-import { hasPendingAppInvitation, applyInvitationsOnAuth } from './invitationService';
+import { hasPendingInvitations, applyInvitationsOnAuth } from './invitationService';
 
 export const createUser = async (
   username: string,
@@ -37,8 +37,8 @@ export const createUser = async (
     throw new AppError('Email already exists', Status.BAD_REQUEST);
   }
 
-  // Check if this email has a pending app invitation
-  const invited = email ? await hasPendingAppInvitation(email) : false;
+  // Check if this email has any pending invitation (app or vehicle)
+  const invited = email ? await hasPendingInvitations(email) : false;
   if (!invited) {
     throw new AppError(
       'An invitation is required to access the application. Please ask an administrator for an invitation.',

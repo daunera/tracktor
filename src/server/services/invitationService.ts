@@ -441,13 +441,3 @@ export const cancelAppInvitation = async (
 
   return createSuccessResponse(null, 'Invitation cancelled successfully');
 };
-
-export const hasPendingAppInvitation = async (email: string): Promise<boolean> => {
-  const normalizedEmail = normalizeInvitationEmail(email);
-  const invitation = await db.query.invitationTable.findFirst({
-    where: (i, { eq, and }) =>
-      and(eq(sql`lower(${i.email})`, normalizedEmail), isNull(i.vehicleId), eq(i.status, 'pending'))
-  });
-
-  return !!invitation;
-};

@@ -20,7 +20,9 @@
     } else {
       const reasonParam = $page.url.searchParams.get('reason');
       if (reasonParam === 'rejected') {
-        initialError = $page.url.searchParams.get('message') || m.auth_account_blocked();
+        initialError = m.auth_account_blocked();
+      } else if (reasonParam === 'no_invitation') {
+        initialError = m.auth_no_invitation();
       }
     }
 
