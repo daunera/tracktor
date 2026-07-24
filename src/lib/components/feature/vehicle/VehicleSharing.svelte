@@ -16,7 +16,6 @@
   import User from '@lucide/svelte/icons/user';
   import Mail from '@lucide/svelte/icons/mail';
   import IdCard from '@lucide/svelte/icons/id-card';
-  import Shield from '@lucide/svelte/icons/shield';
   import Clock from '@lucide/svelte/icons/clock';
   import Trash2 from '@lucide/svelte/icons/trash-2';
   import ArrowLeftRight from '@lucide/svelte/icons/arrow-left-right';
@@ -39,9 +38,6 @@
   let transferTarget = $state<VehicleShareWithUser | null>(null);
   let showTransferDialog = $state(false);
   let transferProcessing = $state(false);
-
-  const roleLabel = (role: 'viewer' | 'editor') =>
-    role === 'editor' ? m.share_form_role_editor() : m.share_form_role_viewer();
 
   $effect(() => {
     const vid = vehicleStore.selectedId;
@@ -219,18 +215,6 @@
       cell: ({ row }) => renderSnippet(textCell, { value: row.original.email })
     },
     {
-      accessorKey: 'role',
-      meta: { className: 'hidden md:table-cell' },
-      header: () =>
-        renderComponent(LabelWithIcon, {
-          icon: Shield,
-          iconClass: 'h-4 w-4',
-          label: m.share_col_role(),
-          style: 'justify-start'
-        }),
-      cell: ({ row }) => renderSnippet(roleCell, { role: row.original.role })
-    },
-    {
       id: 'actions',
       enableHiding: false,
       cell: ({ row }) => renderSnippet(ActionButtons, { share: row.original })
@@ -287,18 +271,6 @@
           style: 'justify-start'
         }),
       cell: ({ row }) => renderSnippet(textCell, { value: row.original.email })
-    },
-    {
-      accessorKey: 'role',
-      meta: { className: 'hidden md:table-cell' },
-      header: () =>
-        renderComponent(LabelWithIcon, {
-          icon: Shield,
-          iconClass: 'h-4 w-4',
-          label: m.share_col_role(),
-          style: 'justify-start'
-        }),
-      cell: ({ row }) => renderSnippet(roleCell, { role: row.original.role })
     },
     {
       id: 'status',
@@ -423,7 +395,6 @@
       {#if params.share.email}
         <p class="text-muted-foreground truncate text-xs">{params.share.email}</p>
       {/if}
-      <p class="text-muted-foreground mt-1 text-xs md:hidden">{roleLabel(params.share.role)}</p>
     </div>
   </div>
 {/snippet}
@@ -436,17 +407,12 @@
     {/if}
     <div class="mt-1 flex flex-wrap items-center gap-2 md:hidden">
       <Badge variant="secondary">{m.share_status_pending()}</Badge>
-      <span class="text-muted-foreground text-xs">{roleLabel(params.invitation.role)}</span>
     </div>
   </div>
 {/snippet}
 
 {#snippet textCell(params: { value: string | null | undefined })}
   <span class="text-sm">{formatTableText(params.value)}</span>
-{/snippet}
-
-{#snippet roleCell(params: { role: 'viewer' | 'editor' })}
-  <span class="text-sm">{roleLabel(params.role)}</span>
 {/snippet}
 
 {#snippet statusCell()}

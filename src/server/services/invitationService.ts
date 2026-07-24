@@ -1,6 +1,6 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 import type { ApiResponse } from '$lib/response';
 import { createSuccessResponse } from './service-response.helper';
 import { AppError, Status } from '$server/exceptions/AppError';
@@ -12,13 +12,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const normalizeInvitationEmail = (email: string): string => email.trim().toLowerCase();
 
 const buildVehicleName = (vehicle: {
-  make: string;
-  model: string;
+  make: string | null;
+  model: string | null;
   licensePlate: string | null;
-}): string =>
-  vehicle.licensePlate
-    ? `${vehicle.make} ${vehicle.model} (${vehicle.licensePlate})`
-    : `${vehicle.make} ${vehicle.model}`;
+}): string | null =>
+  vehicle.make && vehicle.model
+    ? vehicle.licensePlate
+      ? `${vehicle.make} ${vehicle.model} (${vehicle.licensePlate})`
+      : `${vehicle.make} ${vehicle.model}`
+    : null;
 
 const findUserByEmail = async (email: string) => {
   const normalizedEmail = normalizeInvitationEmail(email);
@@ -28,34 +30,12 @@ const findUserByEmail = async (email: string) => {
   });
 };
 
-const sendShareNotificationEmail = async ({
-  inviter,
-  vehicle,
-  recipientEmail,
-  locale
-}: {
-  inviter: { name: string | null; username: string };
-  vehicle: { make: string; model: string; licensePlate: string | null };
-  recipientEmail: string;
-  locale?: InvitationEmailLocale;
-}) => {
-  const emailResult = await sendInvitationEmail({
-    inviterName: inviter.name || '',
-    inviterUsername: inviter.username,
-    vehicleName: buildVehicleName(vehicle),
-    recipientEmail,
-    locale
-  });
-
-  if (!emailResult.success) {
-    console.error('Failed to send invitation email:', emailResult.error);
-  }
-};
+// ── Core invitation (both app and vehicle) ──
 
 export const createInvitation = async (
   email: string,
-  vehicleId: string,
-  role: 'viewer' | 'editor',
+  vehicleId: string | null,
+  role: 'viewer' | 'editor' | null,
   inviterUserId: string,
   locale?: InvitationEmailLocale
 ): Promise<ApiResponse> => {
@@ -63,6 +43,65 @@ export const createInvitation = async (
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
     throw new AppError('Invalid email format', Status.BAD_REQUEST);
+  }
+
+  const inviter = await db.query.usersTable.findFirst({
+    where: (u, { eq }) => eq(u.id, inviterUserId)
+  });
+
+  if (!inviter) {
+    throw new AppError('Inviter not found', Status.NOT_FOUND);
+  }
+
+  // ── App invitation branch (vehicleId is null) ──
+  if (vehicleId === null) {
+    const existingInvite = await db.query.invitationTable.findFirst({
+      where: (i, { eq, and }) =>
+        and(
+          eq(sql`lower(${i.email})`, normalizedEmail),
+          isNull(i.vehicleId),
+          eq(i.status, 'pending')
+        )
+    });
+
+    if (existingInvite) {
+      throw new AppError('An invitation has already been sent to this email', Status.BAD_REQUEST);
+    }
+
+    const existingUser = await findUserByEmail(normalizedEmail);
+    if (existingUser?.status === 'active') {
+      throw new AppError('This user already has access to the application', Status.BAD_REQUEST);
+    }
+
+    await db.insert(schema.invitationTable).values({
+      email: normalizedEmail,
+      vehicleId: null,
+      role: null,
+      invitedBy: inviterUserId
+    });
+
+    const emailResult = await sendInvitationEmail({
+      inviterName: inviter.name || '',
+      inviterUsername: inviter.username,
+      vehicleName: null,
+      recipientEmail: normalizedEmail,
+      locale
+    });
+
+    if (!emailResult.success) {
+      console.error('Failed to send app invitation email:', emailResult.error);
+    }
+
+    return createSuccessResponse(
+      { email: normalizedEmail, type: 'app' },
+      `Invitation sent to ${normalizedEmail}`
+    );
+  }
+
+  // ── Vehicle sharing branch ──
+
+  if (!role) {
+    throw new AppError('Role is required for vehicle invitations', Status.BAD_REQUEST);
   }
 
   const vehicle = await db.query.vehicleTable.findFirst({
@@ -75,14 +114,6 @@ export const createInvitation = async (
 
   if (vehicle.userId !== inviterUserId) {
     throw new AppError('Only the vehicle owner can invite users', Status.FORBIDDEN);
-  }
-
-  const inviter = await db.query.usersTable.findFirst({
-    where: (u, { eq }) => eq(u.id, inviterUserId)
-  });
-
-  if (!inviter) {
-    throw new AppError('Inviter not found', Status.NOT_FOUND);
   }
 
   if (inviter.email && normalizeInvitationEmail(inviter.email) === normalizedEmail) {
@@ -117,9 +148,11 @@ export const createInvitation = async (
     }
 
     await addShare(vehicleId, existingUser.id, role, inviterUserId);
-    await sendShareNotificationEmail({
-      inviter,
-      vehicle,
+
+    await sendInvitationEmail({
+      inviterName: inviter.name || '',
+      inviterUsername: inviter.username,
+      vehicleName: buildVehicleName(vehicle),
       recipientEmail: normalizedEmail,
       locale
     });
@@ -137,9 +170,10 @@ export const createInvitation = async (
     invitedBy: inviterUserId
   });
 
-  await sendShareNotificationEmail({
-    inviter,
-    vehicle,
+  await sendInvitationEmail({
+    inviterName: inviter.name || '',
+    inviterUsername: inviter.username,
+    vehicleName: buildVehicleName(vehicle),
     recipientEmail: normalizedEmail,
     locale
   });
@@ -150,13 +184,15 @@ export const createInvitation = async (
   );
 };
 
+// ── Pending invitations lookup ──
+
 export const getPendingInvitationsForEmail = async (
   email: string
 ): Promise<
   {
     id: string;
-    vehicleId: string;
-    role: 'viewer' | 'editor';
+    vehicleId: string | null;
+    role: 'viewer' | 'editor' | null;
     invitedBy: string;
     vehicleName?: string;
   }[]
@@ -174,7 +210,7 @@ export const getPendingInvitationsForEmail = async (
       licensePlate: schema.vehicleTable.licensePlate
     })
     .from(schema.invitationTable)
-    .innerJoin(schema.vehicleTable, eq(schema.invitationTable.vehicleId, schema.vehicleTable.id))
+    .leftJoin(schema.vehicleTable, eq(schema.invitationTable.vehicleId, schema.vehicleTable.id))
     .where(
       and(
         eq(sql`lower(${schema.invitationTable.email})`, normalizedEmail),
@@ -185,13 +221,15 @@ export const getPendingInvitationsForEmail = async (
   return invitations.map((inv) => ({
     id: inv.id,
     vehicleId: inv.vehicleId,
-    role: inv.role as 'viewer' | 'editor',
+    role: inv.role as 'viewer' | 'editor' | null,
     invitedBy: inv.invitedBy,
-    vehicleName: buildVehicleName({
-      make: inv.make,
-      model: inv.model,
-      licensePlate: inv.licensePlate
-    })
+    vehicleName: inv.make
+      ? (buildVehicleName({
+          make: inv.make,
+          model: inv.model,
+          licensePlate: inv.licensePlate
+        }) ?? undefined)
+      : undefined
   }));
 };
 
@@ -202,16 +240,19 @@ export const fulfillInvitationsForEmail = async (email: string, userId: string):
 
   await db.transaction(async (tx) => {
     for (const invitation of pendingInvitations) {
-      const existingShare = await tx.query.vehicleShareTable.findFirst({
-        where: (s, { eq, and }) => and(eq(s.vehicleId, invitation.vehicleId), eq(s.userId, userId))
-      });
-
-      if (!existingShare) {
-        await tx.insert(schema.vehicleShareTable).values({
-          vehicleId: invitation.vehicleId,
-          userId,
-          role: invitation.role
+      if (invitation.vehicleId && invitation.role) {
+        const existingShare = await tx.query.vehicleShareTable.findFirst({
+          where: (s, { eq, and }) =>
+            and(eq(s.vehicleId, invitation.vehicleId!), eq(s.userId, userId))
         });
+
+        if (!existingShare) {
+          await tx.insert(schema.vehicleShareTable).values({
+            vehicleId: invitation.vehicleId,
+            userId,
+            role: invitation.role
+          });
+        }
       }
 
       await tx
@@ -343,4 +384,70 @@ export const cancelInvitation = async (
   await db.delete(schema.invitationTable).where(eq(schema.invitationTable.id, invitationId));
 
   return createSuccessResponse(null, 'Invitation cancelled successfully');
+};
+
+// ── App (login) invitations ──
+
+export interface PendingAppInvitation {
+  id: string;
+  email: string;
+  invitedBy: string;
+  invitedByName: string | null;
+  invitedByUsername: string | null;
+  createdAt: string;
+}
+
+export const getPendingAppInvitations = async (): Promise<PendingAppInvitation[]> => {
+  const invitations = await db
+    .select({
+      id: schema.invitationTable.id,
+      email: schema.invitationTable.email,
+      invitedBy: schema.invitationTable.invitedBy,
+      createdAt: schema.invitationTable.created_at,
+      invitedByName: schema.usersTable.name,
+      invitedByUsername: schema.usersTable.username
+    })
+    .from(schema.invitationTable)
+    .leftJoin(schema.usersTable, eq(schema.invitationTable.invitedBy, schema.usersTable.id))
+    .where(
+      and(isNull(schema.invitationTable.vehicleId), eq(schema.invitationTable.status, 'pending'))
+    )
+    .orderBy(schema.invitationTable.created_at);
+
+  return invitations.map((inv) => ({
+    id: inv.id,
+    email: inv.email,
+    invitedBy: inv.invitedBy,
+    invitedByName: inv.invitedByName,
+    invitedByUsername: inv.invitedByUsername,
+    createdAt: inv.createdAt
+  }));
+};
+
+export const cancelAppInvitation = async (
+  invitationId: string,
+  currentUserId: string
+): Promise<ApiResponse> => {
+  const invitation = await db.query.invitationTable.findFirst({
+    where: (i, { eq, and }) =>
+      and(eq(i.id, invitationId), isNull(i.vehicleId), eq(i.status, 'pending'))
+  });
+
+  if (!invitation) {
+    throw new AppError('Invitation not found', Status.NOT_FOUND);
+  }
+
+  await db.delete(schema.invitationTable).where(eq(schema.invitationTable.id, invitationId));
+
+  return createSuccessResponse(null, 'Invitation cancelled successfully');
+};
+
+export const hasPendingAppInvitation = async (email: string): Promise<boolean> => {
+  const normalizedEmail = normalizeInvitationEmail(email);
+  const invitation = await db.query.invitationTable.findFirst({
+    where: (i, { eq, and }) =>
+      and(eq(sql`lower(${i.email})`, normalizedEmail), isNull(i.vehicleId), eq(i.status, 'pending'))
+  });
+
+  return !!invitation;
 };

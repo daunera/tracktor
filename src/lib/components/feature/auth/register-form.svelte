@@ -36,11 +36,7 @@
     try {
       const result = await authStore.register(username, password, email);
       if (result.success) {
-        if (result.autoApproved) {
-          goto('/dashboard');
-        } else {
-          goto('/pending');
-        }
+        goto('/dashboard');
       }
     } finally {
       processing = false;

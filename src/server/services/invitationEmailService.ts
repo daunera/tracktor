@@ -2,12 +2,12 @@ import { sendEmail } from './emailNotificationService';
 import { env } from '$lib/config/env.server';
 import * as m from '$lib/paraglide/messages';
 
-export type InvitationEmailLocale = 'en' | 'ar' | 'hi' | 'es' | 'fr' | 'de' | 'it' | 'hu' | 'fi';
+export type InvitationEmailLocale = 'en' | 'hu';
 
 export interface InvitationEmailData {
   inviterName: string;
   inviterUsername: string;
-  vehicleName: string;
+  vehicleName: string | null;
   recipientEmail: string;
   locale?: InvitationEmailLocale;
 }
@@ -31,13 +31,25 @@ export async function sendInvitationEmail(data: InvitationEmailData): Promise<{
   const localeOptions = { locale };
   const appUrl = env.BASE_URL || '';
   const inviter = data.inviterName || data.inviterUsername;
-  const vehicle = data.vehicleName;
+  const isAppInvitation = data.vehicleName === null;
 
-  const subject = m.invitation_email_subject({ inviter }, localeOptions);
-  const body = m.invitation_email_body({ inviter, vehicle }, localeOptions);
+  let subject: string;
+  let body: string;
+  let cta: string;
+
+  if (isAppInvitation) {
+    subject = m.app_invitation_email_subject({ inviter }, localeOptions);
+    body = m.app_invitation_email_body({ inviter }, localeOptions);
+    cta = m.app_invitation_email_cta({}, localeOptions);
+  } else {
+    const vehicle = data.vehicleName!;
+    subject = m.invitation_email_subject({ inviter }, localeOptions);
+    body = m.invitation_email_body({ inviter, vehicle }, localeOptions);
+    cta = m.invitation_email_cta({}, localeOptions);
+  }
+
   const about = m.invitation_email_about({}, localeOptions);
   const loginHint = m.invitation_email_login_hint({}, localeOptions);
-  const cta = m.invitation_email_cta({}, localeOptions);
   const ignore = m.invitation_email_ignore({}, localeOptions);
 
   const text = `${body}\n\n${about}\n\n${loginHint}\n\n${appUrl}\n\n${ignore}`;

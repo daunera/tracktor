@@ -1,8 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { scale } from 'svelte/transition';
   import { authStore } from '$stores/auth.svelte';
+  import { sheetStore } from '$stores/sheet.svelte';
   import { apiClient } from '$lib/helper/api.helper';
   import type { ApiResponse } from '$lib/response';
+  import type { PendingAppInvitationListItem } from '$lib/domain/invitation';
   import { Button } from '$lib/components/ui/button/index.js';
   import { toast } from 'svelte-sonner';
   import Check from '@lucide/svelte/icons/check';
@@ -11,7 +14,10 @@
   import Ban from '@lucide/svelte/icons/ban';
   import ArrowUp from '@lucide/svelte/icons/arrow-up-from-line';
   import ArrowDown from '@lucide/svelte/icons/arrow-down-from-line';
+  import Trash2 from '@lucide/svelte/icons/trash-2';
+  import Mail from '@lucide/svelte/icons/mail';
   import * as m from '$lib/paraglide/messages';
+  import AppInviteForm from './AppInviteForm.svelte';
 
   interface UserRecord {
     id: string;
@@ -26,12 +32,23 @@
   }
 
   let users = $state<UserRecord[]>([]);
+  let pendingInvitations = $state<PendingAppInvitationListItem[]>([]);
   let loading = $state(true);
+  let loadingInvitations = $state(true);
   let error = $state<string | null>(null);
   let statusFilter = $state<string>('');
+  let invitationToCancel = $state<PendingAppInvitationListItem | null>(null);
+  let showCancelInviteDialog = $state(false);
 
   onMount(async () => {
-    await loadUsers();
+    await Promise.all([loadUsers(), loadPendingInvitations()]);
+  });
+
+  // Refresh when the sheet closes after an invitation was sent
+  $effect(() => {
+    if (!sheetStore.open) {
+      loadPendingInvitations();
+    }
   });
 
   const loadUsers = async () => {
@@ -52,6 +69,27 @@
     } finally {
       loading = false;
     }
+  };
+
+  const loadPendingInvitations = async () => {
+    loadingInvitations = true;
+    try {
+      const { data: res } = await apiClient.get<ApiResponse>('/auth/invitations');
+      if (res.success && Array.isArray(res.data)) {
+        pendingInvitations = res.data as PendingAppInvitationListItem[];
+      } else {
+        pendingInvitations = [];
+      }
+    } catch (err: any) {
+      console.error('Error loading pending invitations:', err);
+      pendingInvitations = [];
+    } finally {
+      loadingInvitations = false;
+    }
+  };
+
+  const openInviteSheet = () => {
+    sheetStore.openSheet(AppInviteForm, m.app_invite_title(), m.app_invite_description());
   };
 
   const handleAction = async (userId: string, action: 'approve' | 'reject' | 'unblock') => {
@@ -92,6 +130,27 @@
     }
   };
 
+  const cancelAppInvitation = async () => {
+    const invitation = invitationToCancel;
+    if (!invitation) return;
+    try {
+      const { data: res } = await apiClient.delete<ApiResponse>(
+        `/auth/invitations/${invitation.id}`
+      );
+      if (res.success) {
+        toast.success(m.app_invite_cancelled());
+        await loadPendingInvitations();
+      } else {
+        toast.error(res.message || m.app_invite_error());
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || m.app_invite_error());
+    } finally {
+      showCancelInviteDialog = false;
+      invitationToCancel = null;
+    }
+  };
+
   const canBlock = (user: UserRecord): boolean => {
     if (user.id === authStore.user?.id) return false;
     if (user.isSuperadmin) return false;
@@ -123,9 +182,15 @@
         {filter.label}
       </button>
     {/each}
-    <Button variant="outline" size="sm" onclick={loadUsers} class="ml-auto"
-      >{m.settings_users_refresh()}</Button
-    >
+    <div class="ml-auto flex items-center gap-2">
+      <Button variant="default" size="sm" onclick={openInviteSheet}>
+        <Mail class="mr-1 h-4 w-4" />
+        {m.settings_users_action_invite()}
+      </Button>
+      <Button variant="outline" size="sm" onclick={loadUsers}>
+        {m.settings_users_refresh()}
+      </Button>
+    </div>
   </div>
 
   {#if loading}
@@ -291,4 +356,79 @@
       </table>
     </div>
   {/if}
+
+  <!-- Pending App Invitations Section -->
+  <div class="mt-8">
+    <h3 class="mb-3 text-lg font-semibold">{m.app_invite_pending_title()}</h3>
+    {#if loadingInvitations}
+      <p class="text-muted-foreground py-4 text-center">{m.settings_users_loading()}</p>
+    {:else if pendingInvitations.length === 0}
+      <p class="text-muted-foreground py-4 text-center">{m.share_list_empty()}</p>
+    {:else}
+      <div class="border-border overflow-x-auto rounded-lg border">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-muted/50">
+              <th class="px-4 py-3 text-left font-medium">{m.app_invite_col_email()}</th>
+              <th class="px-4 py-3 text-left font-medium">{m.app_invite_col_invited_by()}</th>
+              <th class="px-4 py-3 text-left font-medium">{m.app_invite_col_date()}</th>
+              <th class="px-4 py-3 text-right font-medium">{m.settings_users_col_actions()}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each pendingInvitations as invitation (invitation.id)}
+              <tr class="border-border border-t">
+                <td class="px-4 py-3 font-medium">{invitation.email}</td>
+                <td class="text-muted-foreground px-4 py-3">
+                  {invitation.invitedByName || invitation.invitedByUsername}
+                </td>
+                <td class="text-muted-foreground px-4 py-3">
+                  {invitation.createdAt ? new Date(invitation.createdAt).toLocaleDateString() : '-'}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onclick={() => {
+                      invitationToCancel = invitation;
+                      showCancelInviteDialog = true;
+                    }}
+                    title={m.share_menu_delete()}
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {/if}
+  </div>
 </div>
+
+{#if showCancelInviteDialog && invitationToCancel}
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      in:scale={{ duration: 500 }}
+      class="dark:bg-card flex max-h-[90vh] w-[80vh] max-w-[400px] max-w-xl min-w-0 flex-col items-center justify-center overflow-y-auto rounded-lg bg-white p-8 shadow-2xl sm:w-auto sm:min-w-sm"
+    >
+      <h3 class="mt-4 text-2xl text-black dark:text-white">{m.share_menu_delete()}</h3>
+      <p class="text-muted-foreground mt-2 text-center text-sm">
+        {m.app_invite_confirm_delete({ email: invitationToCancel.email })}
+      </p>
+      <div class="mt-8 flex w-full justify-around gap-4">
+        <Button variant="secondary" type="button" onclick={() => (showCancelInviteDialog = false)}>
+          {m.common_cancel()}
+        </Button>
+        <Button variant="destructive" type="button" onclick={cancelAppInvitation}>
+          {m.common_confirm()}
+        </Button>
+      </div>
+    </div>
+  </div>
+{/if}

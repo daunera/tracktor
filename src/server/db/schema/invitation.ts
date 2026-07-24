@@ -14,14 +14,8 @@ export const invitationTable = table('invitations', {
     .text()
     .notNull()
     .references(() => usersTable.id, { onDelete: 'cascade' }),
-  vehicleId: t
-    .text()
-    .notNull()
-    .references(() => vehicleTable.id, { onDelete: 'cascade' }),
-  role: t
-    .text({ enum: ['viewer', 'editor'] })
-    .notNull()
-    .default('editor'),
+  vehicleId: t.text().references(() => vehicleTable.id, { onDelete: 'cascade' }),
+  role: t.text({ enum: ['viewer', 'editor'] }).default('editor'),
   status: t
     .text({ enum: ['pending', 'fulfilled', 'expired'] })
     .notNull()

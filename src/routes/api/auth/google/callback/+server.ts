@@ -2,7 +2,10 @@ import type { RequestHandler } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { isGoogleLoginEnabled, getGoogleProvider } from '$server/services/googleOAuth';
 import { syncSuperadminRole } from '$server/services/authService';
-import { hasPendingInvitations, applyInvitationsOnAuth } from '$server/services/invitationService';
+import {
+  hasPendingAppInvitation,
+  applyInvitationsOnAuth
+} from '$server/services/invitationService';
 import { env, isHttps } from '$lib/config/env.server';
 import { db } from '$server/db/index';
 import { usersTable } from '$server/db/schema/index';
@@ -131,13 +134,21 @@ export const GET: RequestHandler = async (event) => {
         }
       }
     } else {
+      // Check if this email has a pending app invitation
+      const invited = await hasPendingAppInvitation(email);
+
+      if (!invited) {
+        // No invitation — redirect to login with error
+        throw redirect(
+          302,
+          '/login?reason=no_invitation&message=An+invitation+is+required+to+access+the+application.+Please+ask+an+administrator+for+an+invitation.'
+        );
+      }
+
       // Create new user
       const isSuperadmin = env.SUPERADMIN_EMAILS.split(',')
         .map((e) => e.trim().toLowerCase())
         .includes(email.toLowerCase());
-
-      // Check if this email has pending invitations (auto-approve if so)
-      const invited = await hasPendingInvitations(email);
 
       // Derive username from email prefix
       let baseUsername = email.split('@')[0].toLowerCase();
@@ -153,7 +164,7 @@ export const GET: RequestHandler = async (event) => {
       }
 
       userId = crypto.randomUUID();
-      userStatus = isSuperadmin || invited ? 'active' : 'pending';
+      userStatus = 'active'; // Always active for invited users
       const now = new Date().toISOString();
 
       await db.insert(usersTable).values({
@@ -166,20 +177,18 @@ export const GET: RequestHandler = async (event) => {
         authProvider: 'google',
         role: isSuperadmin ? 'admin' : 'user',
         status: userStatus,
-        approvedBy: isSuperadmin ? 'system' : invited ? 'invitation' : null,
-        approvedAt: isSuperadmin || invited ? now : null
+        approvedBy: isSuperadmin ? 'system' : 'invitation',
+        approvedAt: now
       });
 
       // Fulfill any pending invitations
-      if (invited) {
-        await applyInvitationsOnAuth(email, userId);
-      }
+      await applyInvitationsOnAuth(email, userId);
     }
   } else {
     throw error(400, 'Google account has no email. Cannot create user.');
   }
 
-  // Create session for all non-rejected users (pending users need it too)
+  // Create session for all non-rejected users
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, userId);
 
@@ -193,16 +202,12 @@ export const GET: RequestHandler = async (event) => {
 
   // Check user status
   if (userStatus === 'pending') {
-    // Redirect to pending approval page (session lets them auto-redirect on approval)
+    // Legacy pending user — redirect to pending page
     throw redirect(302, '/pending');
   }
 
   if (userStatus === 'rejected') {
-    // Redirect to login page with rejection message
-    throw redirect(
-      302,
-      '/login?reason=rejected&message=Your+account+has+been+blocked+by+an+administrator.'
-    );
+    throw redirect(302, '/login?reason=rejected&message=Your+account+has+been+blocked.');
   }
 
   throw redirect(302, '/dashboard');

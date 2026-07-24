@@ -14,7 +14,7 @@ import {
 } from '../utils/session';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
 import { env } from '$lib/config/env.server';
-import { hasPendingInvitations, applyInvitationsOnAuth } from './invitationService';
+import { hasPendingAppInvitation, applyInvitationsOnAuth } from './invitationService';
 
 export const createUser = async (
   username: string,
@@ -37,11 +37,17 @@ export const createUser = async (
     throw new AppError('Email already exists', Status.BAD_REQUEST);
   }
 
+  // Check if this email has a pending app invitation
+  const invited = email ? await hasPendingAppInvitation(email) : false;
+  if (!invited) {
+    throw new AppError(
+      'An invitation is required to access the application. Please ask an administrator for an invitation.',
+      Status.FORBIDDEN
+    );
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
   const userId = crypto.randomUUID();
-
-  // Check if this email has pending invitations
-  const invited = email ? await hasPendingInvitations(email) : false;
   const now = new Date().toISOString();
 
   await db.insert(schema.usersTable).values({
@@ -50,26 +56,21 @@ export const createUser = async (
     passwordHash,
     email,
     authProvider: 'password',
-    status: invited ? 'active' : 'pending',
-    approvedBy: invited ? 'invitation' : null,
-    approvedAt: invited ? now : null
+    status: 'active',
+    approvedBy: 'invitation',
+    approvedAt: now
   });
 
   // Create a session so the user can log in directly
   const sessionToken = generateSessionToken();
   await createSession(sessionToken, userId);
 
-  // Fulfill any pending invitations
+  // Fulfill all pending invitations (both app and vehicle)
   if (email) {
     await applyInvitationsOnAuth(email, userId);
   }
 
-  return createSuccessResponse(
-    { userId, username, sessionToken, autoApproved: invited },
-    invited
-      ? 'User created and auto-approved via invitation.'
-      : 'User created successfully. Pending approval.'
-  );
+  return createSuccessResponse({ userId, username, sessionToken }, 'User created successfully.');
 };
 
 export const createOrUpdateUser = async (
@@ -130,31 +131,17 @@ export const loginUser = async (username: string, password: string): Promise<Api
 
   // Check user status
   if (user.status === 'pending') {
-    if (user.email) {
-      const approved = await applyInvitationsOnAuth(user.email, user.id);
-      if (approved) {
-        user.status = 'active';
-      } else {
-        throw new AppError(
-          'Your registration is pending approval. Please wait for an administrator to approve your account.',
-          Status.FORBIDDEN
-        );
-      }
-    } else {
-      throw new AppError(
-        'Your registration is pending approval. Please wait for an administrator to approve your account.',
-        Status.FORBIDDEN
-      );
-    }
+    // This is a legacy pending user — no auto-approval, they need admin
+    throw new AppError(
+      'Your registration is pending approval. Please wait for an administrator to approve your account.',
+      Status.FORBIDDEN
+    );
   } else if (user.status === 'active' && user.email) {
     await applyInvitationsOnAuth(user.email, user.id);
   }
 
   if (user.status === 'rejected') {
-    throw new AppError(
-      'Your registration has been rejected by an administrator.',
-      Status.FORBIDDEN
-    );
+    throw new AppError('Your account has been blocked.', Status.FORBIDDEN);
   }
 
   // Sync superadmin role on every login

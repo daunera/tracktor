@@ -21,8 +21,11 @@
     } else {
       // Check URL params (e.g. from Google OAuth redirect)
       const reasonParam = $page.url.searchParams.get('reason');
+      const messageParam = $page.url.searchParams.get('message');
       if (reasonParam === 'rejected') {
-        initialError = $page.url.searchParams.get('message') || m.auth_account_blocked();
+        initialError = messageParam || m.auth_account_blocked();
+      } else if (reasonParam === 'no_invitation') {
+        initialError = messageParam || m.auth_no_invitation();
       }
     }
 

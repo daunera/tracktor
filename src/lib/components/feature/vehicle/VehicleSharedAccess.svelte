@@ -18,9 +18,6 @@
   let leaving = $state(false);
   let lastVehicleId = $state<string | undefined>();
 
-  const roleLabel = (role: VehicleShareForUser['role']) =>
-    role === 'editor' ? m.share_form_role_editor() : m.share_form_role_viewer();
-
   const loadShare = async () => {
     const vehicleId = vehicleStore.selectedId;
     if (!vehicleId) return;
@@ -88,10 +85,6 @@
   {:else if share}
     <div class="space-y-4">
       <p class="text-muted-foreground text-sm">{m.share_your_access_description()}</p>
-      <div class="border-border rounded-md border p-4">
-        <p class="text-sm font-medium">{m.share_form_role_label()}</p>
-        <p class="text-muted-foreground mt-1 text-sm">{roleLabel(share.role)}</p>
-      </div>
       <Button variant="destructive" onclick={() => (showLeaveDialog = true)} disabled={leaving}>
         {m.share_leave_access()}
       </Button>

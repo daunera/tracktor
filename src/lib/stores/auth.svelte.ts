@@ -115,7 +115,7 @@ class AuthStore {
     username: string,
     password: string,
     email: string
-  ): Promise<{ success: boolean; autoApproved?: boolean }> => {
+  ): Promise<{ success: boolean }> => {
     try {
       const { data: res } = await apiClient.post<ApiResponse>(
         '/auth/register',
@@ -130,8 +130,7 @@ class AuthStore {
       if (res.success) {
         toast.success(m.auth_register_success());
         this.hasUsers = true;
-        const autoApproved = !!(res.data as any)?.autoApproved;
-        return { success: true, autoApproved };
+        return { success: true };
       }
       return { success: false };
     } catch (err: any) {
