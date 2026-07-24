@@ -1,12 +1,35 @@
 /* eslint-disable no-redeclare */
+import { themes } from '$lib/config/themes';
 import { data as currencies } from 'currency-codes';
 import { getCurrencySymbol } from '$lib/helper/format.helper';
 import { z } from 'zod/v4';
 import * as m from '$lib/paraglide/messages';
 
-interface SettingsSchemaOptions {
-  includeNotificationProcessingSchedule?: boolean;
-}
+export const settingsConfigSchema = z.object({
+  dateFormat: z.string(),
+  locale: z.string().min(2),
+  timezone: z.string().min(3),
+  currency: z.string().min(1, 'Currency is required'),
+  unitOfDistance: z.enum(['kilometer', 'mile']),
+  unitOfVolume: z.enum(['liter', 'gallon']),
+  unitOfLpg: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('liter'),
+  unitOfCng: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('kilogram'),
+  mileageUnitFormat: z
+    .enum(['distance-per-fuel', 'fuel-per-distance', 'uk-mpg'])
+    .default('distance-per-fuel'),
+  theme: z.string().default('light'),
+  customCss: z.string().optional(),
+  featureFuelLog: z.boolean().default(true),
+  featureMaintenance: z.boolean().default(true),
+  featurePucc: z.boolean().default(true),
+  featureReminders: z.boolean().default(true),
+  featureInsurance: z.boolean().default(true),
+  featureOverview: z.boolean().default(true),
+  notificationProcessingEnabled: z.boolean().default(true),
+  notificationProcessingSchedule: z.string().default('0 9 * * *')
+});
+
+export type SettingsConfig = z.infer<typeof settingsConfigSchema>;
 
 export function createSettingsConfigSchema(
   isValidFormat: (value: string) => { valid: boolean },
@@ -17,53 +40,32 @@ export function createSettingsConfigSchema(
 export function createSettingsConfigSchema(
   isValidFormat: (value: string) => { valid: boolean },
   isValidTimezone: (value: string) => boolean,
-  options?: SettingsSchemaOptions
+  options?: { includeNotificationProcessingSchedule?: boolean }
 ): ReturnType<typeof z.object>;
 
 export function createSettingsConfigSchema(
   isValidFormat: (value: string) => { valid: boolean },
   isValidTimezone: (value: string) => boolean,
-  options: SettingsSchemaOptions = {}
+  options: { includeNotificationProcessingSchedule?: boolean } = {}
 ) {
-  const baseSchema = z
-    .object({
+  const baseSchema = settingsConfigSchema
+    .extend({
       dateFormat: z
         .string()
         .refine((fmt) => isValidFormat(fmt).valid, m.settings_error_format_not_valid()),
-      locale: z.string().min(2),
       timezone: z.string().min(3).refine(isValidTimezone, m.settings_error_timezone_invalid()),
-      currency: z.string().min(1, m.settings_error_currency_required()),
-      unitOfDistance: z.enum(['kilometer', 'mile']),
-      unitOfVolume: z.enum(['liter', 'gallon']),
-      unitOfLpg: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('liter'),
-      unitOfCng: z.enum(['liter', 'gallon', 'kilogram', 'pound']).default('kilogram'),
-      mileageUnitFormat: z
-        .enum(['distance-per-fuel', 'fuel-per-distance', 'uk-mpg'])
-        .default('distance-per-fuel'),
-      customCss: z.string().optional(),
-      featureFuelLog: z.boolean().default(true),
-      featureMaintenance: z.boolean().default(true),
-      featurePucc: z.boolean().default(true),
-      featureReminders: z.boolean().default(true),
-      featureInsurance: z.boolean().default(true),
-      featureOverview: z.boolean().default(true),
-      notificationProcessingEnabled: z.boolean().default(true)
+      currency: z.string().min(1, m.settings_error_currency_required())
     })
     .refine((obj) => {
       if (obj.mileageUnitFormat !== 'uk-mpg') return true;
       return obj.unitOfDistance === 'mile' && obj.unitOfVolume === 'liter';
     }, m.settings_error_uk_mpg_units());
 
-  if (!options.includeNotificationProcessingSchedule) {
+  if (options.includeNotificationProcessingSchedule) {
     return baseSchema;
   }
 
-  return baseSchema.extend({
-    notificationProcessingSchedule: z
-      .string()
-      .refine((expr) => expr.trim().split(/\s+/).length === 5, m.notif_cron_invalid())
-      .default('0 9 * * *')
-  });
+  return baseSchema.omit({ notificationProcessingSchedule: true });
 }
 
 export function createSettingsOptions(
@@ -79,10 +81,16 @@ export function createSettingsOptions(
     de: 'Deutsch',
     it: 'Italiano',
     hu: 'Magyar',
-    fi: 'Suomi'
+    fi: 'Suomi',
+    ro: 'Română'
   };
 
   return {
+    themeOptions: Object.values(themes).map((theme) => ({
+      value: theme.name,
+      label: theme.label,
+      colorPreview: theme.colors?.primary || '#000'
+    })),
     currencyOptions: currencies.map((currency) => ({
       value: currency.code,
       label: `${getCurrencySymbol(currency.code)} - ${currency.currency} `

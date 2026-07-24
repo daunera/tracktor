@@ -16,6 +16,12 @@ import { createSuccessResponse, requireRecord } from './service-response.helper'
 import { env } from '$lib/config/env.server';
 import { hasPendingInvitations, applyInvitationsOnAuth } from './invitationService';
 
+const BCRYPT_SALT_ROUNDS = 10;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+}
+
 export const createUser = async (
   username: string,
   password: string,
@@ -46,7 +52,7 @@ export const createUser = async (
     );
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await hashPassword(password);
   const userId = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -81,8 +87,9 @@ export const createOrUpdateUser = async (
     where: (users, { eq }) => eq(users.username, username)
   });
 
+  const passwordHash = await hashPassword(password);
+
   if (!existingUser) {
-    const passwordHash = await bcrypt.hash(password, 10);
     const userId = crypto.randomUUID();
 
     await db.insert(schema.usersTable).values({
@@ -94,7 +101,6 @@ export const createOrUpdateUser = async (
     });
     return userId;
   } else {
-    const passwordHash = await bcrypt.hash(password, 10);
     await db
       .update(schema.usersTable)
       .set({ passwordHash })
@@ -168,9 +174,9 @@ export const loginUser = async (username: string, password: string): Promise<Api
   );
 };
 
-export const logoutUser = async (sessionId: string): Promise<ApiResponse> => {
+export const logoutUser = async (sessionId: string) => {
   await invalidateSession(sessionId);
-  return createSuccessResponse(undefined, 'Logout successful');
+  return undefined;
 };
 
 export const validateSession = async (sessionToken: string): Promise<{ user: User | null }> => {
@@ -178,12 +184,12 @@ export const validateSession = async (sessionToken: string): Promise<{ user: Use
   return { user: result.user };
 };
 
-export const getUsersCount = async (): Promise<ApiResponse> => {
-  const users = await db.select().from(schema.usersTable);
-  return createSuccessResponse({
-    count: users.length,
-    hasUsers: users.length > 0
-  });
+export const getUsersCount = async () => {
+  const [user] = await db.select({ id: schema.usersTable.id }).from(schema.usersTable).limit(1);
+  return {
+    count: user ? 1 : 0,
+    hasUsers: !!user
+  };
 };
 
 export const updateUserProfile = async (
@@ -238,11 +244,11 @@ export const updateUserProfile = async (
       }
     }
 
-    updates.passwordHash = await bcrypt.hash(data.newPassword, 10);
+    updates.passwordHash = await hashPassword(data.newPassword);
   }
 
   if (Object.keys(updates).length === 0) {
-    return createSuccessResponse({ id: user.id, username: user.username }, 'No changes to update');
+    return createSuccessResponse({ id: user.id, username: user.username });
   }
 
   await db.update(schema.usersTable).set(updates).where(eq(schema.usersTable.id, userId));

@@ -1,0 +1,175 @@
+═══════════════════════════════════════════════════════════════
+ TRACKTOR — Hardcoded English Text Audit
+ 2026-07-10
+═══════════════════════════════════════════════════════════════
+
+Files affected: 12
+Total hardcoded strings: ~65
+
+Legend:
+  [HTML]    = visible text in template
+  [ATTR]   = attribute (title, aria-label, alt, placeholder)
+  [TS]     = script/TypeScript fallback string
+  [ZOD]    = Zod validation message
+  [UI]     = shared UI component (affects many pages)
+
+═══════════════════════════════════════════════════════════════
+ 1. SettingsUsersTab.svelte (BIGGEST — ~30 strings)
+═══════════════════════════════════════════════════════════════
+
+ [TS]  L50  'Failed to load users'
+ [TS]  L63  toast.success('User approved')
+ [TS]  L66  toast.success('User rejected')
+ [TS]  L68  toast.success('User unblocked')
+ [TS]  L73  'Action failed'
+ [TS]  L84  'Role changed successfully'
+ [TS]  L88  'Failed to change role'
+ [HTML] L107  "Status filter:"
+ [HTML] L108  "All users" / "Pending" / "Active" / "Rejected"
+ [HTML] L123  "Refresh"
+ [HTML] L127  "Loading users..."
+ [HTML] L134  "No {statusFilter} users found." / "No users found."
+ [HTML] L141  "Username"
+ [HTML] L142  "Name"
+ [HTML] L143  "Email"
+ [HTML] L144  "Role"
+ [HTML] L145  "Provider"
+ [HTML] L146  "Status"
+ [HTML] L147  "Registered"
+ [HTML] L148  "Actions"
+ [ATTR] L200  title="Approve"
+ [HTML] L203  "Approve"
+ [ATTR] L210  title="Reject" / title="Cannot reject yourself or a superadmin"
+ [HTML] L213  "Reject"
+ [ATTR] L222  title="Demote to user"
+ [HTML] L225  "Demote"
+ [ATTR] L233  title="Promote to admin"
+ [HTML] L236  "Promote"
+ [ATTR] L244  title="Block" / title="Cannot block yourself or a superadmin"
+ [HTML] L247  "Block"
+ [ATTR] L255  title="Unblock" / title="Cannot unblock yourself or a superadmin"
+ [HTML] L258  "Unblock"
+
+═══════════════════════════════════════════════════════════════
+ 2. pending/+page.svelte (~8 strings)
+═══════════════════════════════════════════════════════════════
+
+ [HTML] L40  "Registration Pending Approval"
+ [HTML] L42  "Your registration is pending approval from an administrator."
+ [HTML] L44  "A notification will be sent to {email} once your account has been activated."
+ [HTML] L48  "If you believe this is an error, please contact the system administrator."
+ [HTML] L52  "Checking..." / "Check Status"
+ [HTML] L54  "Back to Login"
+
+═══════════════════════════════════════════════════════════════
+ 3. login-form.svelte (~4 strings)
+═══════════════════════════════════════════════════════════════
+
+ [HTML] L70  "Sign in with Google"
+ [HTML] L83  "or"
+ [HTML] L123  "No login methods are currently enabled. Please contact the system administrator."
+ [TS]  L35  'Login failed. Please try again.'
+
+═══════════════════════════════════════════════════════════════
+ 4. register-form.svelte (~3 strings)
+═══════════════════════════════════════════════════════════════
+
+ [HTML] L61  "Sign up with Google"
+ [HTML] L73  "or"
+ [HTML] L124  "No registration methods are currently enabled. Please contact the system administrator."
+
+═══════════════════════════════════════════════════════════════
+ 5. profile-form.svelte (3 Zod validation messages)
+═══════════════════════════════════════════════════════════════
+
+ [ZOD] L34  "Current password is required to change password"
+ [ZOD] L46  "New password must be at least 6 characters"
+ [ZOD] L57  "Passwords do not match"
+
+═══════════════════════════════════════════════════════════════
+ 6. VehicleSharing.svelte (~6 strings)
+═══════════════════════════════════════════════════════════════
+
+ [TS]  L64  'Failed to load shares'
+ [TS]  L67  'Failed to load shares'
+ [TS]  L86  'Failed to remove share'
+ [TS]  L89  'Failed to remove share'
+ [TS]  L112  'Failed to transfer ownership'
+ [TS]  L115  'Failed to transfer ownership'
+
+═══════════════════════════════════════════════════════════════
+ 7. VehicleShareForm.svelte (~3 strings)
+═══════════════════════════════════════════════════════════════
+
+ [HTML] L85  "Change"
+ [HTML] L98  "Searching..."
+ [HTML] L122  "No users found."
+ [TS]  L59  'Failed to share vehicle'
+ [TS]  L62  'Operation failed'
+
+═══════════════════════════════════════════════════════════════
+ 8. SettingsModal.svelte (2 strings)
+═══════════════════════════════════════════════════════════════
+
+ [TS]  L168  'Kilogram (kg)'
+ [TS]  L169  'Pound (lb)'
+
+═══════════════════════════════════════════════════════════════
+ 9. CronInput.svelte (1 string)
+═══════════════════════════════════════════════════════════════
+
+ [ATTR] L130  aria-label="Cron expression"
+
+═══════════════════════════════════════════════════════════════
+ 10. FileDropZone.svelte (1 string)
+═══════════════════════════════════════════════════════════════
+
+ [ATTR] L239  alt="Uploaded"
+
+═══════════════════════════════════════════════════════════════
+ 11. Shared UI components (3 files, same pattern)
+═══════════════════════════════════════════════════════════════
+
+ [UI] SettingsModal.svelte L245     <span class="sr-only">Close</span>
+ [UI] sheet-content.svelte L59      <span class="sr-only">Close</span>
+ [UI] dialog-content.svelte L41     <span class="sr-only">Close</span>
+
+═══════════════════════════════════════════════════════════════
+ 12. error.svelte (already good — uses m.fn with fallbacks)
+═══════════════════════════════════════════════════════════════
+
+ ✓ Uses pattern: msg(m.error_404_title, 'Page Not Found')
+   Fallback strings are intentional and correct.
+
+═══════════════════════════════════════════════════════════════
+ Server-side (bonus — not user-visible but notable)
+═══════════════════════════════════════════════════════════════
+
+ [TS] rateLimit.ts L66       'Rate Limit Exceeded. Please try again later.'
+ [TS] errorHandler.ts L20    'Internal server error'
+ [TS] serviceUtils.ts L57    `${entityName} deleted successfully.`
+ [TS] notificationService L78 formatExpiryMessage('Insurance policy', ...)
+ [TS] notificationService L105 formatExpiryMessage(...)
+
+═══════════════════════════════════════════════════════════════
+ SUMMARY
+═══════════════════════════════════════════════════════════════
+
+ Priority  File                          Strings  Impact
+ ─────────────────────────────────────────────────────────────
+ 🔴 HIGH   SettingsUsersTab.svelte          ~30   Full admin panel
+ 🔴 HIGH   pending/+page.svelte              ~8   Registration flow
+ 🔴 HIGH   login-form.svelte                 ~4   Login page
+ 🔴 HIGH   register-form.svelte              ~3   Registration page
+ 🟡 MED    VehicleSharing.svelte             ~6   Sharing management
+ 🟡 MED    VehicleShareForm.svelte           ~5   Share dialog
+ 🟡 MED    profile-form.svelte               3    Password change
+ 🟡 MED    SettingsModal.svelte              2    Gas units
+ 🟢 LOW    CronInput.svelte                  1    Accessibility
+ 🟢 LOW    FileDropZone.svelte               1    Image alt
+ 🟢 LOW    UI components (sr-only)           3    Screen readers
+ ✓  OK     error.svelte                      0    Already i18n'd
+
+ Existing en.json: 743 keys
+ Existing hu.json: 744 keys (1 extra)
+ Missing hu translations: 0

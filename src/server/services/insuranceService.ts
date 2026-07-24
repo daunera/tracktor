@@ -1,11 +1,11 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import { eq } from 'drizzle-orm';
-import type { ApiResponse } from '$lib/response';
-import type { Insurance } from '$lib/domain/insurance';
-import { validateVehicleExists, performDelete } from '../utils/serviceUtils';
+import { createOwnedEntityService } from '../utils/entity-service-factory';
 import { clearFixedEndDate } from './domain-payload.helper';
 import { createSuccessResponse, requireRecord } from './service-response.helper';
+import type { ApiResponse } from '$lib/response';
+import { eq } from 'drizzle-orm';
+import type { Insurance } from '$lib/domain/insurance';
 
 type InsurancePayload = {
   provider: string;
@@ -21,46 +21,25 @@ type InsurancePayload = {
   attachment: string | null;
 };
 
+type InsuranceUpdatePayload = Partial<InsurancePayload>;
+
+const entityService = createOwnedEntityService<InsurancePayload, InsuranceUpdatePayload>({
+  table: schema.insuranceTable,
+  entityName: 'Insurance',
+  sanitize: clearFixedEndDate
+});
+
 export const addInsurance = async (
   vehicleId: string,
   insuranceData: InsurancePayload,
-  username?: string | null
+  _username?: string | null
 ): Promise<ApiResponse> => {
-  await validateVehicleExists(vehicleId);
-  const sanitizedInsuranceData = clearFixedEndDate(insuranceData);
-  const insurance = await db
-    .insert(schema.insuranceTable)
-    .values({
-      ...sanitizedInsuranceData,
-      vehicleId: vehicleId,
-      id: undefined,
-      createdBy: username || undefined
-    })
-    .returning();
-  return createSuccessResponse(insurance[0], 'Insurance details added successfully.');
+  const result = await entityService.add(vehicleId, insuranceData);
+  return createSuccessResponse(result, 'Insurance details added successfully.');
 };
 
-export const getInsurances = async (vehicleId: string): Promise<ApiResponse> => {
-  const insurance = await db.query.insuranceTable.findMany({
-    where: (insurances, { eq }) => eq(insurances.vehicleId, vehicleId)
-  });
-  // Ensure response does not include endDate for non-fixed recurrence
-  const normalized = insurance.map((i) =>
-    i.recurrenceType !== 'none' ? { ...i, endDate: null } : i
-  );
-  return createSuccessResponse(normalized);
-};
-
-export const getInsuranceById = async (id: string): Promise<ApiResponse> => {
-  const insurance = requireRecord(
-    await db.query.insuranceTable.findFirst({
-      where: (insurances, { eq }) => eq(insurances.id, id)
-    }),
-    `No insurance found for id: ${id}`
-  );
-
-  return createSuccessResponse(insurance);
-};
+export const getInsuranceById = entityService.getById;
+export const deleteInsurance = entityService.remove;
 
 export const updateInsurance = async (
   vehicleId: string,
@@ -83,6 +62,12 @@ export const updateInsurance = async (
   return createSuccessResponse(updatedInsurance[0], 'Insurance details updated successfully.');
 };
 
-export const deleteInsurance = async (id: string): Promise<ApiResponse> => {
-  return await performDelete(schema.insuranceTable, id, 'Insurance');
+export const getInsurances = async (vehicleId: string) => {
+  const insurance = await db.query.insuranceTable.findMany({
+    where: (insurances, { eq }) => eq(insurances.vehicleId, vehicleId)
+  });
+  const normalized = insurance.map((i) =>
+    i.recurrenceType !== 'none' ? { ...i, endDate: null } : i
+  );
+  return createSuccessResponse(normalized);
 };

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import LoginForm from '$feature/auth/login-form.svelte';
   import { authStore } from '$stores/auth.svelte';
   import { onMount } from 'svelte';
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import * as m from '$lib/paraglide/messages';
 
   let authCheckComplete = $state(false);

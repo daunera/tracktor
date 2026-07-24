@@ -18,7 +18,8 @@ import { buildWebhookHeaders } from './notification-provider-http.helper';
 import { getEnabledProvidersForChannels } from './notificationProviderService';
 import {
   getActiveNotificationsForChannels,
-  getPendingNotificationsForChannels
+  getPendingNotificationsForChannels,
+  syncAllNotifications
 } from './notificationService';
 
 type DispatchResult = {
@@ -207,7 +208,7 @@ async function dispatchNotifications(useAllNotifications: boolean): Promise<{
   const notificationResult = useAllNotifications
     ? await getActiveNotificationsForChannels(channels)
     : await getPendingNotificationsForChannels(channels);
-  const allNotifications = (notificationResult.data ?? []) as Notification[];
+  const allNotifications = notificationResult as Notification[];
 
   const results = await Promise.all(
     providers.map((provider) => {
@@ -241,6 +242,7 @@ export async function dispatchScheduledNotifications(): Promise<{
   providerCount: number;
   results: DispatchResult[];
 }> {
+  await syncAllNotifications();
   return dispatchNotifications(false);
 }
 

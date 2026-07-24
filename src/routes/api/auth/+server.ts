@@ -1,9 +1,9 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
 import { env, isHttps } from '$lib/config/env.server';
 import { isGoogleLoginEnabled, isPasswordLoginEnabled } from '$server/services/googleOAuth';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // POST /api/auth - Login with username/password
 export const POST: RequestHandler = async (event) => {
@@ -22,8 +22,9 @@ export const POST: RequestHandler = async (event) => {
     const result = await authService.loginUser(body.username, body.password);
 
     // Set session cookie
-    if (result.data?.sessionToken) {
-      event.cookies.set('session', result.data.sessionToken, {
+    const loginData = result.data as { sessionToken?: string } | undefined;
+    if (loginData?.sessionToken) {
+      event.cookies.set('session', loginData.sessionToken, {
         path: '/',
         httpOnly: true,
         secure: isHttps,
@@ -32,7 +33,7 @@ export const POST: RequestHandler = async (event) => {
       });
     }
 
-    return json(result);
+    return jsonResponse(result);
   });
 };
 
@@ -53,19 +54,16 @@ export const GET: RequestHandler = async (event) => {
         const sessionResult = await authService.validateSession(sessionToken);
         if (sessionResult.user?.status === 'rejected') {
           // User has been rejected/blocked — don't treat as authenticated
-          return json({
+          return jsonResponse({
             ...result,
-            data: {
-              ...result.data,
-              isAuthDisabled,
-              passwordLoginEnabled,
-              googleLoginEnabled,
-              user: null,
-              isAuthenticated: false,
-              reason: 'rejected',
-              message:
-                'Your account has been blocked by an administrator. Please contact the system administrator.'
-            }
+            isAuthDisabled,
+            passwordLoginEnabled,
+            googleLoginEnabled,
+            user: null,
+            isAuthenticated: false,
+            reason: 'rejected',
+            message:
+              'Your account has been blocked by an administrator. Please contact the system administrator.'
           });
         }
         user = sessionResult.user;
@@ -75,16 +73,13 @@ export const GET: RequestHandler = async (event) => {
       }
     }
 
-    return json({
+    return jsonResponse({
       ...result,
-      data: {
-        ...result.data,
-        isAuthDisabled,
-        passwordLoginEnabled,
-        googleLoginEnabled,
-        user,
-        isAuthenticated: isAuthDisabled || !!user
-      }
+      isAuthDisabled,
+      passwordLoginEnabled,
+      googleLoginEnabled,
+      user,
+      isAuthenticated: isAuthDisabled || !!user
     });
   });
 };
@@ -113,9 +108,6 @@ export const DELETE: RequestHandler = async (event) => {
       maxAge: 0 // Expire immediately
     });
 
-    return json({
-      success: true,
-      message: 'Logout successful'
-    });
+    return jsonResponse(undefined, 'Logout successful');
   });
 };

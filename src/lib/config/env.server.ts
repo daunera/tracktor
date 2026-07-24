@@ -47,7 +47,7 @@ function getDBPath(): string | undefined {
  * Includes all environment variables
  */
 export const serverEnv = {
-  NODE_ENV: privateEnv.NODE_ENV || 'dev',
+  NODE_ENV: privateEnv.NODE_ENV || 'development',
   DB_PATH: privateEnv.DB_PATH || getDBPath(),
   UPLOADS_DIR: privateEnv.UPLOADS_DIR || './uploads',
   BODY_SIZE_LIMIT: privateEnv.BODY_SIZE_LIMIT

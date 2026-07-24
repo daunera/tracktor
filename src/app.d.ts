@@ -7,7 +7,6 @@ declare global {
       message: string;
     }
     interface Locals {
-      requestBody?: any;
       user?: {
         id: string;
         username: string;
@@ -18,6 +17,8 @@ declare global {
         status?: string;
         role?: string;
       };
+      /** Pre-parsed request body, set by middleware */
+      requestBody?: unknown;
     }
     // interface PageData {}
     // interface PageState {}

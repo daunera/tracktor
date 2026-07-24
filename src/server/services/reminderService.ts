@@ -1,12 +1,12 @@
 import { AppError, Status } from '../exceptions/AppError';
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import type { ApiResponse } from '$lib/response';
 import type { Reminder } from '$lib/domain/reminder';
 import { performDelete, validateVehicleExists } from '../utils/serviceUtils';
 import { eq } from 'drizzle-orm';
 import { syncVehicleNotifications } from './notificationService';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { requireRecord, createSuccessResponse } from './service-response.helper';
+import type { ApiResponse } from '$lib/response';
 
 type ReminderPayload = {
   type: Reminder['type'];
@@ -19,6 +19,7 @@ type ReminderPayload = {
   isCompleted?: boolean;
 };
 
+type ReminderUpdatePayload = Partial<ReminderPayload>;
 function reminderRecordToPayload(
   reminder: typeof schema.reminderTable.$inferSelect
 ): ReminderPayload {
@@ -42,7 +43,10 @@ const sanitizeNote = (note: unknown) => {
   return null;
 };
 
-const normalizeReminderPayload = (data: ReminderPayload, fallback?: Partial<ReminderPayload>) => {
+const normalizeReminderPayload = (
+  data: Partial<ReminderPayload>,
+  fallback?: Partial<ReminderPayload>
+) => {
   const merged = { ...fallback, ...data };
   const { type, remindSchedule, dueDate, recurrenceType, recurrenceInterval, recurrenceEndDate } =
     merged;
@@ -88,7 +92,7 @@ export const addReminder = async (
 ): Promise<ApiResponse> => {
   await validateVehicleExists(vehicleId);
   const payload = normalizeReminderPayload(reminderData);
-  const inserted = await db
+  const [inserted] = await db
     .insert(schema.reminderTable)
     .values({
       ...payload,
@@ -100,19 +104,19 @@ export const addReminder = async (
 
   await syncVehicleNotifications(vehicleId);
 
-  return createSuccessResponse(inserted[0], 'Reminder created successfully.');
+  return createSuccessResponse(inserted);
 };
 
-export const getReminders = async (vehicleId: string): Promise<ApiResponse> => {
+export const getReminders = async (vehicleId: string) => {
   const reminders = await db.query.reminderTable.findMany({
     where: (reminder, { eq }) => eq(reminder.vehicleId, vehicleId),
     orderBy: (reminder, { asc }) => [asc(reminder.dueDate)]
   });
 
-  return createSuccessResponse(reminders);
+  return reminders;
 };
 
-export const getReminderById = async (id: string): Promise<ApiResponse> => {
+export const getReminderById = async (id: string) => {
   const reminder = requireRecord(
     await db.query.reminderTable.findFirst({
       where: (reminder, { eq }) => eq(reminder.id, id)
@@ -120,7 +124,7 @@ export const getReminderById = async (id: string): Promise<ApiResponse> => {
     `No reminder found for id : ${id}`
   );
 
-  return createSuccessResponse(reminder);
+  return reminder;
 };
 
 export const updateReminder = async (
@@ -145,10 +149,10 @@ export const updateReminder = async (
 
   await syncVehicleNotifications(vehicleId);
 
-  return createSuccessResponse(updated, 'Reminder updated successfully.');
+  return createSuccessResponse(updated);
 };
 
-export const deleteReminder = async (id: string): Promise<ApiResponse> => {
+export const deleteReminder = async (id: string) => {
   const existingReminder = await db.query.reminderTable.findFirst({
     where: (reminder, { eq }) => eq(reminder.id, id)
   });
