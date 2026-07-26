@@ -50,11 +50,11 @@
       authStore.isLoggedIn = true;
     }
 
-    if (!authStore.isLoggedIn) {
+    if (!data.user) {
       goto('/login', { replaceState: true });
       return;
     }
-    if (authStore.user?.status === 'pending') {
+    if (data.user?.status === 'pending') {
       goto('/pending', { replaceState: true });
       return;
     }
