@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import * as pollutionCertificateService from '$server/services/pollutionCertificateService';
-import { pollutionCertificateSchema } from '$lib/domain/pucc';
+import { pollutionCertificatePartialSchema } from '$lib/domain/pucc';
 import { jsonResponse, parseBody, withRouteErrorHandling } from '$server/utils/route-handler';
 
 export const GET: RequestHandler = async (event) => {
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async (event) => {
 export const PUT: RequestHandler = async (event) => {
   return withRouteErrorHandling('PUCC PUT error:', async () => {
     const { id, puccId } = event.params;
-    const parsed = await parseBody(event, pollutionCertificateSchema.partial(), { vehicleId: id });
+    const parsed = await parseBody(event, pollutionCertificatePartialSchema, { vehicleId: id });
     const body = {
       ...parsed,
       recurrenceType: parsed.recurrenceType ?? 'none',

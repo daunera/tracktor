@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import * as insuranceService from '$server/services/insuranceService';
-import { insuranceSchema } from '$lib/domain/insurance';
+import { insurancePartialSchema } from '$lib/domain/insurance';
 import { jsonResponse, parseBody, withRouteErrorHandling } from '$server/utils/route-handler';
 
 export const GET: RequestHandler = async (event) => {
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async (event) => {
 export const PUT: RequestHandler = async (event) => {
   return withRouteErrorHandling('Insurance PUT error:', async () => {
     const { id, insuranceId } = event.params;
-    const parsed = await parseBody(event, insuranceSchema.partial(), { vehicleId: id });
+    const parsed = await parseBody(event, insurancePartialSchema, { vehicleId: id });
     const body = {
       ...parsed,
       recurrenceType: parsed.recurrenceType ?? 'none',
