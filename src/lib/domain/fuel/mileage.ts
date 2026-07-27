@@ -93,6 +93,9 @@ export function computeMileagePerWindow(fuelLogs: FuelLogInput[]): (number | nul
     ) {
       return null;
     }
+    if (windowIdx >= windows.length) {
+      return null;
+    }
     const w = windows[windowIdx]!;
     windowIdx++;
     return parseFloat((w.distance / w.totalFuel).toFixed(2));
