@@ -3,8 +3,6 @@ import { db } from '../db/index';
 import { createOwnedEntityService } from '../utils/entity-service-factory';
 import type { z } from 'zod';
 import { maintenanceSchema } from '$lib/domain/maintenance';
-import { createSuccessResponse } from './service-response.helper';
-import type { ApiResponse } from '$lib/response';
 import { eq } from 'drizzle-orm';
 
 type MaintenanceLogPayload = Omit<z.infer<typeof maintenanceSchema>, 'id' | 'vehicleId'>;
@@ -19,9 +17,9 @@ export const addMaintenanceLog = async (
   vehicleId: string,
   maintenanceLogData: MaintenanceLogPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const result = await entityService.add(vehicleId, maintenanceLogData);
-  return createSuccessResponse(result, 'Maintenance log added successfully.');
+  return result;
 };
 
 export const getMaintenanceLogById = entityService.getById;
@@ -32,7 +30,7 @@ export const updateMaintenanceLog = async (
   id: string,
   maintenanceLogData: MaintenanceLogUpdatePayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const existing = await entityService.getById(id);
   const updatedLog = await db
     .update(schema.maintenanceLogTable)
@@ -42,7 +40,7 @@ export const updateMaintenanceLog = async (
     })
     .where(eq(schema.maintenanceLogTable.id, id))
     .returning();
-  return createSuccessResponse(updatedLog[0], 'Maintenance log updated successfully.');
+  return updatedLog[0];
 };
 
 export const getMaintenanceLogs = async (vehicleId: string) => {

@@ -1,8 +1,8 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
 import * as invitationService from '$server/services/invitationService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // DELETE /api/auth/invitations/[id] - Cancel an app invitation (admin only)
 export const DELETE: RequestHandler = async (event) => {
@@ -24,6 +24,6 @@ export const DELETE: RequestHandler = async (event) => {
 
     const result = await invitationService.cancelAppInvitation(invitationId, currentUser.id);
 
-    return json(result);
+    return jsonResponse(result);
   });
 };

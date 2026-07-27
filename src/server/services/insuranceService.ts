@@ -2,8 +2,7 @@ import * as schema from '../db/schema/index';
 import { db } from '../db/index';
 import { createOwnedEntityService } from '../utils/entity-service-factory';
 import { clearFixedEndDate } from './domain-payload.helper';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
-import type { ApiResponse } from '$lib/response';
+import { requireRecord } from './service-response.helper';
 import { eq } from 'drizzle-orm';
 import type { Insurance } from '$lib/domain/insurance';
 
@@ -33,9 +32,9 @@ export const addInsurance = async (
   vehicleId: string,
   insuranceData: InsurancePayload,
   _username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const result = await entityService.add(vehicleId, insuranceData);
-  return createSuccessResponse(result, 'Insurance details added successfully.');
+  return result;
 };
 
 export const getInsuranceById = entityService.getById;
@@ -46,7 +45,7 @@ export const updateInsurance = async (
   id: string,
   insuranceData: InsurancePayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   requireRecord(
     await db.query.insuranceTable.findFirst({
       where: (insurances, { eq, and }) =>
@@ -59,7 +58,7 @@ export const updateInsurance = async (
     .set({ ...clearFixedEndDate(insuranceData), updatedBy: username || undefined })
     .where(eq(schema.insuranceTable.id, id))
     .returning();
-  return createSuccessResponse(updatedInsurance[0], 'Insurance details updated successfully.');
+  return updatedInsurance[0];
 };
 
 export const getInsurances = async (vehicleId: string) => {
@@ -69,5 +68,5 @@ export const getInsurances = async (vehicleId: string) => {
   const normalized = insurance.map((i) =>
     i.recurrenceType !== 'none' ? { ...i, endDate: null } : i
   );
-  return createSuccessResponse(normalized);
+  return normalized;
 };

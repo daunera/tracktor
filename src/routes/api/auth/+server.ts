@@ -22,9 +22,8 @@ export const POST: RequestHandler = async (event) => {
     const result = await authService.loginUser(body.username, body.password);
 
     // Set session cookie
-    const loginData = result.data as { sessionToken?: string } | undefined;
-    if (loginData?.sessionToken) {
-      event.cookies.set('session', loginData.sessionToken, {
+    if (result?.sessionToken) {
+      event.cookies.set('session', result.sessionToken, {
         path: '/',
         httpOnly: true,
         secure: isHttps,

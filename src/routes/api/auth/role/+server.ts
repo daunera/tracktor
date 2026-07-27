@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // POST /api/auth/role - Change a user's role (promote/demote)
 export const POST: RequestHandler = async (event) => {
@@ -27,6 +27,6 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const result = await authService.changeUserRole(body.userId, body.role, currentUser.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

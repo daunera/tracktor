@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as invitationService from '$server/services/invitationService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // DELETE /api/vehicles/[id]/invitations/[invitationId] - Cancel a pending invitation
 export const DELETE: RequestHandler = async (event) => {
@@ -23,6 +23,6 @@ export const DELETE: RequestHandler = async (event) => {
     }
 
     const result = await invitationService.cancelInvitation(invitationId, id, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

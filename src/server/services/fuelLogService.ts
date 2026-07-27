@@ -7,8 +7,7 @@ import { computeMileagePerWindow, type FuelLogInput } from '$lib/domain/fuel/mil
 import { validateVehicleExistsByLicensePlate } from '../utils/serviceUtils';
 import { getConfigsByKeys } from './configService';
 import { createOwnedEntityService } from '../utils/entity-service-factory';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
-import type { ApiResponse } from '$lib/response';
+import { requireRecord } from './service-response.helper';
 
 type FuelLogPayload = Omit<z.infer<typeof fuelSchema>, 'id' | 'vehicleId'>;
 type FuelLogUpdatePayload = Partial<FuelLogPayload>;
@@ -22,9 +21,9 @@ export const addFuelLog = async (
   vehicleId: string,
   fuelLogData: FuelLogPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const result = await entityService.add(vehicleId, fuelLogData);
-  return createSuccessResponse(result, 'Fuel log added successfully.');
+  return result;
 };
 
 export const getFuelLogById = entityService.getById;
@@ -35,7 +34,7 @@ export const updateFuelLog = async (
   id: string,
   fuelLogData: FuelLogPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   requireRecord(
     await db.query.fuelLogTable.findFirst({
       where: (log, { eq, and }) => and(eq(log.vehicleId, vehicleId), eq(log.id, id))
@@ -51,7 +50,7 @@ export const updateFuelLog = async (
     })
     .where(eq(schema.fuelLogTable.id, id))
     .returning();
-  return createSuccessResponse(updatedLog[0], 'Fuel log updated successfully.');
+  return updatedLog[0];
 };
 
 export const getFuelLogs = async (vehicleId: string) => {
@@ -98,14 +97,14 @@ export const getFuelLogs = async (vehicleId: string) => {
 
     return { ...log, distanceDriven, mileage };
   });
-  return createSuccessResponse(fuelLogsWithMetrics);
+  return fuelLogsWithMetrics;
 };
 
 export const addFuelLogByLicensePlate = async (
   licensePlate: string,
   fuelLogData: FuelLogPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   await validateVehicleExistsByLicensePlate(licensePlate);
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (vehicle, { eq }) => eq(vehicle.licensePlate, licensePlate)

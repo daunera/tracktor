@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as vehicleShareService from '$server/services/vehicleShareService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/vehicles/[id]/shares - List shares for a vehicle
 export const GET: RequestHandler = async (event) => {
@@ -13,7 +13,7 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.getSharesForVehicle(id);
-    return json(result);
+    return jsonResponse(result);
   });
 };
 
@@ -42,6 +42,6 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.addShare(id, body.userId, body.role, user.id);
-    return json(result, { status: 201 });
+    return jsonResponse(result, undefined, { status: 201 });
   });
 };

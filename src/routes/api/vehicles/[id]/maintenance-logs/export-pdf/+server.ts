@@ -14,19 +14,17 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const vehicle = await vehicleService.getVehicleById(vehicleId);
-    const vehicleData = vehicle.data as
-      { make?: string; model?: string; licensePlate?: string } | undefined;
 
     const maintenanceLogs = await maintenanceLogService.getMaintenanceLogs(vehicleId);
 
     const vehicleLabel =
-      [vehicleData?.make, vehicleData?.model].filter(Boolean).join(' ') || 'Unknown Vehicle';
-    const safePlate = vehicleData?.licensePlate
-      ? vehicleData.licensePlate.replace(/[^a-zA-Z0-9]/g, '-')
+      [vehicle?.make, vehicle?.model].filter(Boolean).join(' ') || 'Unknown Vehicle';
+    const safePlate = vehicle?.licensePlate
+      ? vehicle.licensePlate.replace(/[^a-zA-Z0-9]/g, '-')
       : 'vehicle';
 
     const pdfBuffer: Buffer = await generateMaintenanceLogsPdf(maintenanceLogs, {
-      licensePlate: vehicleData?.licensePlate ?? null,
+      licensePlate: vehicle?.licensePlate ?? null,
       label: vehicleLabel
     });
 

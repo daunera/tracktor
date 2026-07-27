@@ -2,7 +2,7 @@ import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
 import * as invitationService from '$server/services/invitationService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 import { getLocale } from '$lib/paraglide/runtime.js';
 import type { InvitationEmailLocale } from '$server/services/invitationEmailService';
 
@@ -34,7 +34,7 @@ export const POST: RequestHandler = async (event) => {
       locale
     );
 
-    return json(result);
+    return jsonResponse(result);
   });
 };
 

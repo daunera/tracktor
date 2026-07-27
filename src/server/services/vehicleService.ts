@@ -3,7 +3,7 @@ import { db } from '../db/index';
 import { eq, inArray, sql } from 'drizzle-orm';
 import type { Vehicle } from '$lib/domain/vehicle';
 import { performDelete } from '../utils/serviceUtils';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { requireRecord } from './service-response.helper';
 import { getAccessibleVehicleIds, getUserRoleForVehicle } from './vehicleShareService';
 import { AppError, Status } from '$server/exceptions/AppError';
 import {
@@ -50,7 +50,7 @@ export const addVehicle = async (
     })
     .returning();
 
-  return createSuccessResponse(parseVehicleRecord(vehicle), 'Vehicle added successfully.');
+  return parseVehicleRecord(vehicle);
 };
 
 export const getAllVehicles = async (userId?: string) => {
@@ -164,7 +164,7 @@ export const getAllVehicles = async (userId?: string) => {
     };
   });
 
-  return createSuccessResponse(enrichedVehicles);
+  return enrichedVehicles;
 };
 
 export const getVehicleById = async (id: string, userId?: string) => {
@@ -225,11 +225,11 @@ export const getVehicleById = async (id: string, userId?: string) => {
   );
   const overallMileage = computeAverageMileage(fuelLogs);
 
-  return createSuccessResponse({
+  return {
     ...parseVehicleRecord(vehicle),
     currentOdometer: currentOdometer || vehicle.odometer || 0,
     overallMileage
-  });
+  };
 };
 
 export const updateVehicle = async (
@@ -265,7 +265,7 @@ export const updateVehicle = async (
     .where(eq(schema.vehicleTable.id, id))
     .returning();
 
-  return createSuccessResponse(parseVehicleRecord(updatedVehicle), 'Vehicle updated successfully.');
+  return parseVehicleRecord(updatedVehicle);
 };
 
 export const deleteVehicle = async (id: string, userId?: string) => {
@@ -294,7 +294,7 @@ export const getVehiclesMinimal = async (userId?: string) => {
     },
     ...(accessibleIds ? { where: (v, { inArray }) => inArray(v.id, accessibleIds) } : {})
   });
-  return createSuccessResponse(vehicles);
+  return vehicles;
 };
 
 export const getVehicleSummary = async (id: string, userId?: string) => {
@@ -310,9 +310,9 @@ export const getVehicleSummary = async (id: string, userId?: string) => {
     })
   ]);
 
-  return createSuccessResponse({
-    ...vehicle.data,
+  return {
+    ...vehicle,
     totalFuelLogs: fuelLogsCount.length,
     totalMaintenanceLogs: maintenanceLogsCount.length
-  });
+  };
 };

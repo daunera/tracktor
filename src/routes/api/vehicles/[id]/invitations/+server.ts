@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as invitationService from '$server/services/invitationService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/vehicles/[id]/invitations - List pending invitations for a vehicle
 export const GET: RequestHandler = async (event) => {
@@ -19,6 +19,6 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const result = await invitationService.getPendingInvitationsForVehicle(id, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

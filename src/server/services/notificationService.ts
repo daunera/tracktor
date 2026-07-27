@@ -18,7 +18,7 @@ import {
 } from './notification-service.helper';
 import { getAppConfigByKey } from './configService';
 import * as m from '$lib/paraglide/messages';
-import { createSuccessResponse, createFailureResponse } from './service-response.helper';
+import { createFailureResponse } from './service-response.helper';
 
 type NotificationType = keyof typeof NOTIFICATION_TYPES;
 type NotificationSource = keyof typeof NOTIFICATION_SOURCES;
@@ -246,7 +246,7 @@ export const clearNotification = async (notificationId: string) => {
     .where(eq(schema.notificationTable.id, notificationId))
     .returning();
 
-  return createSuccessResponse(clearedNotifications[0], m.notif_cleared());
+  return clearedNotifications[0];
 };
 
 export const markNotificationAsRead = async (notificationId: string) => {
@@ -260,7 +260,7 @@ export const markNotificationAsRead = async (notificationId: string) => {
     return createFailureResponse(m.notif_error_not_found(), null);
   }
 
-  return createSuccessResponse(updatedNotification[0], m.notif_marked_read());
+  return updatedNotification[0];
 };
 
 export const markAllNotificationsAsRead = async (vehicleId: string) => {
@@ -275,5 +275,5 @@ export const markAllNotificationsAsRead = async (vehicleId: string) => {
     )
     .returning();
 
-  return createSuccessResponse(updatedNotifications, m.notif_all_marked_read());
+  return updatedNotifications;
 };

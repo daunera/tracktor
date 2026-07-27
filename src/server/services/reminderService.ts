@@ -5,8 +5,7 @@ import type { Reminder } from '$lib/domain/reminder';
 import { performDelete, validateVehicleExists } from '../utils/serviceUtils';
 import { eq } from 'drizzle-orm';
 import { syncVehicleNotifications } from './notificationService';
-import { requireRecord, createSuccessResponse } from './service-response.helper';
-import type { ApiResponse } from '$lib/response';
+import { requireRecord } from './service-response.helper';
 
 type ReminderPayload = {
   type: Reminder['type'];
@@ -89,7 +88,7 @@ export const addReminder = async (
   vehicleId: string,
   reminderData: ReminderPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   await validateVehicleExists(vehicleId);
   const payload = normalizeReminderPayload(reminderData);
   const [inserted] = await db
@@ -104,7 +103,7 @@ export const addReminder = async (
 
   await syncVehicleNotifications(vehicleId);
 
-  return createSuccessResponse(inserted);
+  return inserted;
 };
 
 export const getReminders = async (vehicleId: string) => {
@@ -132,7 +131,7 @@ export const updateReminder = async (
   id: string,
   reminderData: ReminderPayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const reminder = requireRecord(
     await db.query.reminderTable.findFirst({
       where: (reminder, { eq, and }) => and(eq(reminder.vehicleId, vehicleId), eq(reminder.id, id))
@@ -149,7 +148,7 @@ export const updateReminder = async (
 
   await syncVehicleNotifications(vehicleId);
 
-  return createSuccessResponse(updated);
+  return updated;
 };
 
 export const deleteReminder = async (id: string) => {

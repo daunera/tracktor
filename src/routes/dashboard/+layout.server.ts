@@ -45,6 +45,6 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
     user,
     rawConfigs,
     configs: configsMap,
-    vehicles: vehiclesResponse.data || []
+    vehicles: vehiclesResponse || []
   };
 };

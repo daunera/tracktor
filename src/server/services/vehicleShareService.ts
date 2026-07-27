@@ -1,11 +1,10 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
 import { eq } from 'drizzle-orm';
-import type { ApiResponse } from '$lib/response';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { requireRecord } from './service-response.helper';
 import { AppError, Status } from '$server/exceptions/AppError';
 
-export const getSharesForVehicle = async (vehicleId: string): Promise<ApiResponse> => {
+export const getSharesForVehicle = async (vehicleId: string) => {
   const shares = await db
     .select({
       id: schema.vehicleShareTable.id,
@@ -20,7 +19,7 @@ export const getSharesForVehicle = async (vehicleId: string): Promise<ApiRespons
     .innerJoin(schema.usersTable, eq(schema.vehicleShareTable.userId, schema.usersTable.id))
     .where(eq(schema.vehicleShareTable.vehicleId, vehicleId));
 
-  return createSuccessResponse(shares, 'Shares retrieved successfully');
+  return shares;
 };
 
 export const addShare = async (
@@ -28,7 +27,7 @@ export const addShare = async (
   userId: string,
   role: 'viewer' | 'editor',
   currentUserId: string
-): Promise<ApiResponse> => {
+) => {
   // Verify the vehicle belongs to the current user
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (v, { eq }) => eq(v.id, vehicleId)
@@ -73,7 +72,7 @@ export const addShare = async (
       .where(eq(schema.vehicleShareTable.id, existingShare.id))
       .returning();
 
-    return createSuccessResponse(updated, 'Share role updated successfully');
+    return updated;
   }
 
   await db.insert(schema.vehicleShareTable).values({
@@ -82,14 +81,14 @@ export const addShare = async (
     role
   });
 
-  return createSuccessResponse({ vehicleId, userId, role }, 'Vehicle shared successfully');
+  return { vehicleId, userId, role };
 };
 
 export const updateShareRole = async (
   shareId: string,
   newRole: 'viewer' | 'editor',
   currentUserId: string
-): Promise<ApiResponse> => {
+) => {
   const share = requireRecord(
     await db.query.vehicleShareTable.findFirst({
       where: (s, { eq }) => eq(s.id, shareId)
@@ -112,10 +111,10 @@ export const updateShareRole = async (
     .where(eq(schema.vehicleShareTable.id, shareId))
     .returning();
 
-  return createSuccessResponse(updated, 'Share role updated successfully');
+  return updated;
 };
 
-export const removeShare = async (shareId: string, currentUserId: string): Promise<ApiResponse> => {
+export const removeShare = async (shareId: string, currentUserId: string) => {
   const share = requireRecord(
     await db.query.vehicleShareTable.findFirst({
       where: (s, { eq }) => eq(s.id, shareId)
@@ -140,10 +139,10 @@ export const removeShare = async (shareId: string, currentUserId: string): Promi
 
   await db.delete(schema.vehicleShareTable).where(eq(schema.vehicleShareTable.id, shareId));
 
-  return createSuccessResponse(null, 'Share removed successfully');
+  return null;
 };
 
-export const getShareForUser = async (vehicleId: string, userId: string): Promise<ApiResponse> => {
+export const getShareForUser = async (vehicleId: string, userId: string) => {
   const share = await db.query.vehicleShareTable.findFirst({
     where: (s, { eq, and }) => and(eq(s.vehicleId, vehicleId), eq(s.userId, userId))
   });
@@ -152,22 +151,19 @@ export const getShareForUser = async (vehicleId: string, userId: string): Promis
     throw new AppError('Share not found', Status.NOT_FOUND);
   }
 
-  return createSuccessResponse(
-    {
-      id: share.id,
-      userId: share.userId,
-      role: share.role,
-      createdAt: share.created_at
-    },
-    'Share retrieved successfully'
-  );
+  return {
+    id: share.id,
+    userId: share.userId,
+    role: share.role,
+    createdAt: share.created_at
+  };
 };
 
 export const transferOwnership = async (
   vehicleId: string,
   newOwnerUserId: string,
   currentUserId: string
-): Promise<ApiResponse> => {
+) => {
   // Verify the vehicle exists and current user is the owner
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (v, { eq }) => eq(v.id, vehicleId)
@@ -225,10 +221,7 @@ export const transferOwnership = async (
     });
   });
 
-  return createSuccessResponse(
-    { vehicleId, newOwnerId: newOwnerUserId },
-    'Ownership transferred successfully'
-  );
+  return { vehicleId, newOwnerId: newOwnerUserId };
 };
 
 export const getAccessibleVehicleIds = async (userId: string): Promise<string[]> => {

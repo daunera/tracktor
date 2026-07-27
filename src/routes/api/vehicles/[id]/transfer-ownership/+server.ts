@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as vehicleShareService from '$server/services/vehicleShareService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // POST /api/vehicles/[id]/transfer-ownership - Transfer vehicle ownership
 export const POST: RequestHandler = async (event) => {
@@ -24,6 +24,6 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.transferOwnership(id, body.newOwnerId, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

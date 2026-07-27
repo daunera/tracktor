@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // POST /api/auth/approve - Approve/reject/unblock a user (superadmin only)
 export const POST: RequestHandler = async (event) => {
@@ -43,6 +43,6 @@ export const POST: RequestHandler = async (event) => {
         throw error(400, 'Invalid action. Must be approve, reject, or unblock.');
     }
 
-    return json(result);
+    return jsonResponse(result);
   });
 };

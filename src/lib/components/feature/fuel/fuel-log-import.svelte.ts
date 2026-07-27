@@ -8,7 +8,13 @@ import { configStore } from '$lib/stores/config.svelte';
 import * as m from '$lib/paraglide/messages';
 
 export type FuelLogColumnKey =
-  'date' | 'odometer' | 'fuelAmount' | 'cost' | 'filled' | 'missedLast' | 'notes';
+  | 'date'
+  | 'odometer'
+  | 'fuelAmount'
+  | 'cost'
+  | 'filled'
+  | 'missedLast'
+  | 'notes';
 
 export interface ColumnDefinition {
   key: FuelLogColumnKey;

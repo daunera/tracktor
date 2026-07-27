@@ -16,7 +16,7 @@ export interface Vehicle {
   customFields?: Record<string, string> | null;
   userId?: string;
   ownerName?: string | null;
-  ownerUsername?: string;
+  ownerUsername?: string | null;
 }
 
 export const FUEL_TYPES = {

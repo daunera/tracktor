@@ -4,8 +4,7 @@ import { createOwnedEntityService } from '../utils/entity-service-factory';
 import { clearFixedEndDate } from './domain-payload.helper';
 import type { z } from 'zod';
 import { pollutionCertificateSchema } from '$lib/domain/pucc';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
-import type { ApiResponse } from '$lib/response';
+import { requireRecord } from './service-response.helper';
 import { eq } from 'drizzle-orm';
 
 type PollutionCertificatePayload = Omit<
@@ -27,9 +26,9 @@ export const addPollutionCertificate = async (
   vehicleId: string,
   pollutionCertificateData: PollutionCertificatePayload,
   _username?: string | null
-): Promise<ApiResponse> => {
+) => {
   const result = await entityService.add(vehicleId, pollutionCertificateData);
-  return createSuccessResponse(result, 'Pollution certificate added successfully.');
+  return result;
 };
 
 export const getPollutionCertificateById = entityService.getById;
@@ -40,7 +39,7 @@ export const updatePollutionCertificate = async (
   id: string,
   pollutionCertificateData: PollutionCertificatePayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   requireRecord(
     await db.query.pollutionCertificateTable.findFirst({
       where: (certificates, { eq, and }) =>
@@ -54,10 +53,7 @@ export const updatePollutionCertificate = async (
     .set({ ...clearFixedEndDate(pollutionCertificateData), updatedBy: username || undefined })
     .where(eq(schema.pollutionCertificateTable.id, id))
     .returning();
-  return createSuccessResponse(
-    updatedCertificate[0],
-    'Pollution certificate updated successfully.'
-  );
+  return updatedCertificate[0];
 };
 
 export const getPollutionCertificates = async (vehicleId: string) => {
@@ -67,5 +63,5 @@ export const getPollutionCertificates = async (vehicleId: string) => {
   const normalized = pollutionCertificates.map((c) =>
     c.recurrenceType !== 'none' ? { ...c, expiryDate: null } : c
   );
-  return createSuccessResponse(normalized);
+  return normalized;
 };

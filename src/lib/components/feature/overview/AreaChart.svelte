@@ -135,7 +135,13 @@
             {/snippet}
           </Chart.Tooltip>
         {/snippet}
-        {#snippet marks({ getAreaProps, visibleSeries }: { getAreaProps: (s: any, i: number) => any; visibleSeries: any[] })}
+        {#snippet marks({
+          getAreaProps,
+          visibleSeries
+        }: {
+          getAreaProps: (s: any, i: number) => any;
+          visibleSeries: any[];
+        })}
           {#each visibleSeries as s, i (s.key)}
             {#if s.key === 'y'}
               <LinearGradient
