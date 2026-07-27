@@ -11,3 +11,6 @@ bun.lockb
 # Ignore specific files for linting
 project.inlang/.meta.json
 project.inlang/README.md
+# inlang auto-generated
+i18n/project.inlang/.meta.json
+i18n/project.inlang/README.md

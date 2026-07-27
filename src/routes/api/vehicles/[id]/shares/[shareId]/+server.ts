@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as vehicleShareService from '$server/services/vehicleShareService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // PUT /api/vehicles/[id]/shares/[shareId] - Update share role
 export const PUT: RequestHandler = async (event) => {
@@ -24,7 +24,7 @@ export const PUT: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.updateShareRole(shareId, body.role, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };
 
@@ -43,6 +43,6 @@ export const DELETE: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.removeShare(shareId, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

@@ -4,7 +4,6 @@ import { Status } from '../exceptions/AppError';
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
 import { eq, and } from 'drizzle-orm';
-import { type ApiResponse } from '$lib/response';
 import {
   generateSessionToken,
   createSession,
@@ -12,15 +11,17 @@ import {
   invalidateSession,
   type User
 } from '../utils/session';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import { requireRecord } from './service-response.helper';
 import { env } from '$lib/config/env.server';
 import { hasPendingInvitations, applyInvitationsOnAuth } from './invitationService';
 
-export const createUser = async (
-  username: string,
-  password: string,
-  email: string
-): Promise<ApiResponse> => {
+const BCRYPT_SALT_ROUNDS = 10;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+}
+
+export const createUser = async (username: string, password: string, email: string) => {
   if (env.DISABLE_PASSWORD_LOGIN) {
     throw new AppError('Password login is disabled.', Status.BAD_REQUEST);
   }
@@ -46,7 +47,7 @@ export const createUser = async (
     );
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await hashPassword(password);
   const userId = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -70,7 +71,7 @@ export const createUser = async (
     await applyInvitationsOnAuth(email, userId);
   }
 
-  return createSuccessResponse({ userId, username, sessionToken }, 'User created successfully.');
+  return { userId, username, sessionToken };
 };
 
 export const createOrUpdateUser = async (
@@ -81,8 +82,9 @@ export const createOrUpdateUser = async (
     where: (users, { eq }) => eq(users.username, username)
   });
 
+  const passwordHash = await hashPassword(password);
+
   if (!existingUser) {
-    const passwordHash = await bcrypt.hash(password, 10);
     const userId = crypto.randomUUID();
 
     await db.insert(schema.usersTable).values({
@@ -94,7 +96,6 @@ export const createOrUpdateUser = async (
     });
     return userId;
   } else {
-    const passwordHash = await bcrypt.hash(password, 10);
     await db
       .update(schema.usersTable)
       .set({ passwordHash })
@@ -103,7 +104,7 @@ export const createOrUpdateUser = async (
   }
 };
 
-export const loginUser = async (username: string, password: string): Promise<ApiResponse> => {
+export const loginUser = async (username: string, password: string) => {
   if (env.DISABLE_PASSWORD_LOGIN) {
     throw new AppError('Password login is disabled.', Status.BAD_REQUEST);
   }
@@ -150,27 +151,24 @@ export const loginUser = async (username: string, password: string): Promise<Api
   const sessionToken = generateSessionToken();
   const session = await createSession(sessionToken, user.id);
 
-  return createSuccessResponse(
-    {
-      sessionToken,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-        authProvider: user.authProvider,
-        status: user.status,
-        role
-      }
-    },
-    'Login successful'
-  );
+  return {
+    sessionToken,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      authProvider: user.authProvider,
+      status: user.status,
+      role
+    }
+  };
 };
 
-export const logoutUser = async (sessionId: string): Promise<ApiResponse> => {
+export const logoutUser = async (sessionId: string) => {
   await invalidateSession(sessionId);
-  return createSuccessResponse(undefined, 'Logout successful');
+  return undefined;
 };
 
 export const validateSession = async (sessionToken: string): Promise<{ user: User | null }> => {
@@ -178,12 +176,12 @@ export const validateSession = async (sessionToken: string): Promise<{ user: Use
   return { user: result.user };
 };
 
-export const getUsersCount = async (): Promise<ApiResponse> => {
-  const users = await db.select().from(schema.usersTable);
-  return createSuccessResponse({
-    count: users.length,
-    hasUsers: users.length > 0
-  });
+export const getUsersCount = async () => {
+  const [user] = await db.select({ id: schema.usersTable.id }).from(schema.usersTable).limit(1);
+  return {
+    count: user ? 1 : 0,
+    hasUsers: !!user
+  };
 };
 
 export const updateUserProfile = async (
@@ -194,7 +192,7 @@ export const updateUserProfile = async (
     currentPassword?: string;
     newPassword?: string;
   }
-): Promise<ApiResponse> => {
+) => {
   const user = requireRecord(
     await db.query.usersTable.findFirst({
       where: (users, { eq }) => eq(users.id, userId)
@@ -238,19 +236,16 @@ export const updateUserProfile = async (
       }
     }
 
-    updates.passwordHash = await bcrypt.hash(data.newPassword, 10);
+    updates.passwordHash = await hashPassword(data.newPassword);
   }
 
   if (Object.keys(updates).length === 0) {
-    return createSuccessResponse({ id: user.id, username: user.username }, 'No changes to update');
+    return { id: user.id, username: user.username };
   }
 
   await db.update(schema.usersTable).set(updates).where(eq(schema.usersTable.id, userId));
 
-  return createSuccessResponse(
-    { id: user.id, username: user.username, name: updates.name, email: updates.email },
-    'Profile updated successfully'
-  );
+  return { id: user.id, username: user.username, name: updates.name, email: updates.email };
 };
 
 // --- Registration approval ---
@@ -306,7 +301,7 @@ export const getEffectiveRole = (user: {
   return 'user';
 };
 
-export const getUsers = async (statusFilter?: string): Promise<ApiResponse> => {
+export const getUsers = async (statusFilter?: string) => {
   let users;
   if (statusFilter) {
     users = await db
@@ -345,14 +340,14 @@ export const getUsers = async (statusFilter?: string): Promise<ApiResponse> => {
     isSuperadmin: isSuperadmin(u)
   }));
 
-  return createSuccessResponse(usersWithMeta, 'Users retrieved successfully');
+  return usersWithMeta;
 };
 
 export const approveUser = async (
   userId: string,
   approverUsername: string,
   approverUserId: string
-): Promise<ApiResponse> => {
+) => {
   const user = requireRecord(
     await db.query.usersTable.findFirst({
       where: (users, { eq }) => eq(users.id, userId)
@@ -370,17 +365,14 @@ export const approveUser = async (
     })
     .where(eq(schema.usersTable.id, userId));
 
-  return createSuccessResponse(
-    { id: userId, username: user.username, status: 'active' },
-    'User approved successfully'
-  );
+  return { id: userId, username: user.username, status: 'active' };
 };
 
 export const rejectUser = async (
   userId: string,
   rejectorUsername: string,
   rejectorUserId: string
-): Promise<ApiResponse> => {
+) => {
   // Cannot block yourself
   if (userId === rejectorUserId) {
     throw new AppError('You cannot block yourself', Status.FORBIDDEN);
@@ -408,17 +400,14 @@ export const rejectUser = async (
     })
     .where(eq(schema.usersTable.id, userId));
 
-  return createSuccessResponse(
-    { id: userId, username: user.username, status: 'rejected' },
-    'User rejected'
-  );
+  return { id: userId, username: user.username, status: 'rejected' };
 };
 
 export const unblockUser = async (
   userId: string,
   unblockerUsername: string,
   unblockerUserId: string
-): Promise<ApiResponse> => {
+) => {
   // Cannot unblock yourself (no-op guard, unblocking self doesn't make sense)
   if (userId === unblockerUserId) {
     throw new AppError('You cannot unblock yourself', Status.FORBIDDEN);
@@ -446,17 +435,14 @@ export const unblockUser = async (
     })
     .where(eq(schema.usersTable.id, userId));
 
-  return createSuccessResponse(
-    { id: userId, username: user.username, status: 'active' },
-    'User unblocked successfully'
-  );
+  return { id: userId, username: user.username, status: 'active' };
 };
 
-export const searchUsers = async (query: string): Promise<ApiResponse> => {
+export const searchUsers = async (query: string) => {
   // Exact email match only — for sharing invitations
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(query)) {
-    return createSuccessResponse([], 'Query must be a valid email address');
+    return [];
   }
 
   const users = await db
@@ -470,7 +456,7 @@ export const searchUsers = async (query: string): Promise<ApiResponse> => {
     .where(and(eq(schema.usersTable.email, query), eq(schema.usersTable.status, 'active')))
     .limit(1);
 
-  return createSuccessResponse(users, 'Users retrieved successfully');
+  return users;
 };
 
 // --- Role management ---
@@ -479,7 +465,7 @@ export const changeUserRole = async (
   targetUserId: string,
   newRole: 'admin' | 'user',
   currentUserId: string
-): Promise<ApiResponse> => {
+) => {
   // Fetch the target user
   const targetUser = requireRecord(
     await db.query.usersTable.findFirst({
@@ -511,9 +497,5 @@ export const changeUserRole = async (
     .set({ role: newRole })
     .where(eq(schema.usersTable.id, targetUserId));
 
-  const action = newRole === 'admin' ? 'promoted to admin' : 'demoted to user';
-  return createSuccessResponse(
-    { id: targetUserId, username: targetUser.username, role: newRole },
-    `User ${action} successfully`
-  );
+  return { id: targetUserId, username: targetUser.username, role: newRole };
 };

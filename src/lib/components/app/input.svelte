@@ -5,7 +5,8 @@
   import ColorPicker from 'svelte-awesome-color-picker';
   import * as Popover from '$ui/popover';
   import { Calendar } from '$lib/components/ui/calendar/index.js';
-  import { formatDateForCalendar } from '$lib/helper/format.helper';
+  import { formatDateForCalendar, parseDate } from '$lib/helper/format.helper';
+  import { CalendarDate } from '@internationalized/date';
   import * as m from '$lib/paraglide/messages';
 
   type InputType = Exclude<HTMLInputTypeAttribute, 'file'> | 'calendar';
@@ -28,6 +29,13 @@
   }: Props = $props();
 
   let open = $state(false);
+
+  const calendarValue = $derived.by(() => {
+    if (!value) return undefined;
+    const d = parseDate(value as string);
+    if (isNaN(d.getTime())) return undefined;
+    return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  });
 </script>
 
 <div id="input-wrapper" class="relative">
@@ -99,6 +107,8 @@
           id="date-calendar"
           type="single"
           captionLayout="dropdown"
+          value={calendarValue}
+          placeholder={calendarValue}
           onValueChange={(v) => {
             if (v) {
               value = formatDateForCalendar(v);

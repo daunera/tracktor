@@ -22,6 +22,12 @@ import { ensureAppDirectories } from '$server/utils/fs';
 import { initializeNotificationScheduler } from '$server/services/notificationSchedulerService';
 
 const middlewareChain = new MiddlewareChain();
+middlewareChain.init([
+  new CorsMiddleware(),
+  new AuthMiddleware(),
+  new RateLimitMiddleware(),
+  new LoggingMiddleware()
+]);
 
 /** Paraglide cookie name — matches what the generated runtime uses. */
 const PARAGLIDE_COOKIE = 'PARAGLIDE_LOCALE';
@@ -140,24 +146,16 @@ const initPromise = (async () => {
   }
 })();
 
-const buildMiddlewares = () => [
-  new CorsMiddleware(),
-  new AuthMiddleware(),
-  new RateLimitMiddleware(),
-  new LoggingMiddleware()
-];
-
 export const handleError: HandleServerError = async ({ error, event }) => {
   logError(error, event);
 
   const body = createErrorResponseBody(error);
 
-  return { message: body.message || 'Internal server error' };
+  return { message: body.error.message || 'Internal server error' };
 };
 
 const originalHandle: Handle = async ({ event, resolve }) => {
   await initPromise;
-  middlewareChain.init(buildMiddlewares());
 
   const middlewareResult = await middlewareChain.handle(event);
 

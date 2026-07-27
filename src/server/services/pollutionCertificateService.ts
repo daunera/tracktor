@@ -1,72 +1,45 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
-import { eq } from 'drizzle-orm';
-import type { ApiResponse } from '$lib/response';
-import type { PollutionCertificate } from '$lib/domain/pucc';
-import { validateVehicleExists, performDelete } from '../utils/serviceUtils';
+import { createOwnedEntityService } from '../utils/entity-service-factory';
 import { clearFixedEndDate } from './domain-payload.helper';
-import { createSuccessResponse, requireRecord } from './service-response.helper';
+import type { z } from 'zod';
+import { pollutionCertificateSchema } from '$lib/domain/pucc';
+import { requireRecord } from './service-response.helper';
+import { eq } from 'drizzle-orm';
 
-type PollutionCertificatePayload = {
-  certificateNumber: string;
-  issueDate: string;
-  expiryDate: string | null;
-  recurrenceType: PollutionCertificate['recurrenceType'];
-  recurrenceInterval: number;
-  testingCenter: string;
-  notes: string | null;
-  attachment: string | null;
-};
+type PollutionCertificatePayload = Omit<
+  z.infer<typeof pollutionCertificateSchema>,
+  'id' | 'vehicleId'
+>;
+type PollutionCertificateUpdatePayload = Partial<PollutionCertificatePayload>;
+
+const entityService = createOwnedEntityService<
+  PollutionCertificatePayload,
+  PollutionCertificateUpdatePayload
+>({
+  table: schema.pollutionCertificateTable,
+  entityName: 'Pollution certificate',
+  sanitize: clearFixedEndDate
+});
 
 export const addPollutionCertificate = async (
   vehicleId: string,
   pollutionCertificateData: PollutionCertificatePayload,
-  username?: string | null
-): Promise<ApiResponse> => {
-  await validateVehicleExists(vehicleId);
-  const sanitizedPayload = clearFixedEndDate(pollutionCertificateData);
-  const pollutionCertificate = await db
-    .insert(schema.pollutionCertificateTable)
-    .values({
-      ...sanitizedPayload,
-      vehicleId: vehicleId,
-      id: undefined,
-      createdBy: username || undefined
-    })
-    .returning();
-  return createSuccessResponse(
-    pollutionCertificate[0],
-    'Pollution certificate added successfully.'
-  );
+  _username?: string | null
+) => {
+  const result = await entityService.add(vehicleId, pollutionCertificateData);
+  return result;
 };
 
-export const getPollutionCertificates = async (vehicleId: string): Promise<ApiResponse> => {
-  const pollutionCertificates = await db.query.pollutionCertificateTable.findMany({
-    where: (certificates, { eq }) => eq(certificates.vehicleId, vehicleId)
-  });
-  const normalized = pollutionCertificates.map((c) =>
-    c.recurrenceType !== 'none' ? { ...c, expiryDate: null } : c
-  );
-  return createSuccessResponse(normalized);
-};
-
-export const getPollutionCertificateById = async (id: string): Promise<ApiResponse> => {
-  const pollutionCertificate = requireRecord(
-    await db.query.pollutionCertificateTable.findFirst({
-      where: (certificates, { eq }) => eq(certificates.id, id)
-    }),
-    `No PUCC found for id : ${id}`
-  );
-
-  return createSuccessResponse(pollutionCertificate);
-};
+export const getPollutionCertificateById = entityService.getById;
+export const deletePollutionCertificate = entityService.remove;
 
 export const updatePollutionCertificate = async (
   vehicleId: string,
   id: string,
   pollutionCertificateData: PollutionCertificatePayload,
   username?: string | null
-): Promise<ApiResponse> => {
+) => {
   requireRecord(
     await db.query.pollutionCertificateTable.findFirst({
       where: (certificates, { eq, and }) =>
@@ -80,12 +53,16 @@ export const updatePollutionCertificate = async (
     .set({ ...clearFixedEndDate(pollutionCertificateData), updatedBy: username || undefined })
     .where(eq(schema.pollutionCertificateTable.id, id))
     .returning();
-  return createSuccessResponse(
-    updatedCertificate[0],
-    'Pollution certificate updated successfully.'
-  );
+  return updatedCertificate[0];
 };
 
-export const deletePollutionCertificate = async (id: string): Promise<ApiResponse> => {
-  return await performDelete(schema.pollutionCertificateTable, id, 'Pollution certificate');
+export const getPollutionCertificates = async (vehicleId: string) => {
+  const pollutionCertificates = await db.query.pollutionCertificateTable.findMany({
+    where: (certificates, { eq }) => eq(certificates.vehicleId, vehicleId),
+    orderBy: (cert, { desc }) => [desc(cert.issueDate)]
+  });
+  const normalized = pollutionCertificates.map((c) =>
+    c.recurrenceType !== 'none' ? { ...c, expiryDate: null } : c
+  );
+  return normalized;
 };

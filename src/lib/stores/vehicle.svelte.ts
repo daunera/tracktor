@@ -1,16 +1,25 @@
 import type { Vehicle } from '$lib/domain';
 import { apiClient } from '$lib/helper/api.helper';
 import type { ApiResponse } from '$lib/response';
-import { toast } from 'svelte-sonner';
 
 class VehicleStore {
   vehicles = $state<Vehicle[]>();
   selectedId = $state<string>();
   processing = $state(false);
-  openSheet = $state(false);
-  editMode = $state(false);
   error = $state<string>();
   shareRefreshKey = $state(0);
+
+  setVehicles = (vehicles: Vehicle[]) => {
+    this.vehicles = vehicles;
+    if (vehicles && vehicles.length > 0) {
+      // Preserve current selection if the vehicle still exists
+      if (!this.selectedId || !vehicles.some((v) => v.id === this.selectedId)) {
+        this.selectedId = vehicles[0].id || undefined;
+      }
+    } else {
+      this.selectedId = undefined;
+    }
+  };
 
   refreshVehicles = () => {
     this.processing = true;
@@ -19,7 +28,10 @@ class VehicleStore {
       .then(({ data: res }) => {
         this.vehicles = res.data;
         if (this.vehicles && this.vehicles.length > 0) {
-          this.selectedId = this.vehicles[0].id || undefined;
+          // Preserve current selection if the vehicle still exists
+          if (!this.selectedId || !this.vehicles.some((v) => v.id === this.selectedId)) {
+            this.selectedId = this.vehicles[0].id || undefined;
+          }
         } else {
           this.selectedId = undefined;
         }
@@ -27,23 +39,6 @@ class VehicleStore {
       })
       .catch((err) => (this.error = 'Failed to fetch vehicles'))
       .finally(() => (this.processing = false));
-  };
-
-  openForm = (id?: string) => {
-    this.openSheet = true;
-    if (id) {
-      const vehicle = this.vehicles?.find((v) => v.id == id);
-      if (vehicle) {
-        this.selectedId = id;
-        this.editMode = true;
-      }
-    }
-  };
-
-  closeForm = () => {
-    this.openSheet = false;
-    this.editMode = false;
-    this.selectedId = undefined;
   };
 }
 

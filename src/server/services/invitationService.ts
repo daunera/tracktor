@@ -1,8 +1,6 @@
 import * as schema from '../db/schema/index';
 import { db } from '../db/index';
 import { eq, and, sql, isNull } from 'drizzle-orm';
-import type { ApiResponse } from '$lib/response';
-import { createSuccessResponse } from './service-response.helper';
 import { AppError, Status } from '$server/exceptions/AppError';
 import { sendInvitationEmail, type InvitationEmailLocale } from './invitationEmailService';
 import { addShare } from './vehicleShareService';
@@ -38,7 +36,7 @@ export const createInvitation = async (
   role: 'viewer' | 'editor' | null,
   inviterUserId: string,
   locale?: InvitationEmailLocale
-): Promise<ApiResponse> => {
+) => {
   const normalizedEmail = normalizeInvitationEmail(email);
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
@@ -92,10 +90,7 @@ export const createInvitation = async (
       console.error('Failed to send app invitation email:', emailResult.error);
     }
 
-    return createSuccessResponse(
-      { email: normalizedEmail, type: 'app' },
-      `Invitation sent to ${normalizedEmail}`
-    );
+    return { email: normalizedEmail, type: 'app' };
   }
 
   // ── Vehicle sharing branch ──
@@ -157,10 +152,7 @@ export const createInvitation = async (
       locale
     });
 
-    return createSuccessResponse(
-      { email: normalizedEmail, vehicleId, role, sharedImmediately: true },
-      `Vehicle shared with ${normalizedEmail}`
-    );
+    return { email: normalizedEmail, vehicleId, role, sharedImmediately: true };
   }
 
   await db.insert(schema.invitationTable).values({
@@ -178,10 +170,7 @@ export const createInvitation = async (
     locale
   });
 
-  return createSuccessResponse(
-    { email: normalizedEmail, vehicleId, role, sharedImmediately: false },
-    `Invitation sent to ${normalizedEmail}`
-  );
+  return { email: normalizedEmail, vehicleId, role, sharedImmediately: false };
 };
 
 // ── Pending invitations lookup ──
@@ -305,10 +294,7 @@ export const applyInvitationsOnAuth = async (email: string, userId: string): Pro
   return true;
 };
 
-export const getPendingInvitationsForVehicle = async (
-  vehicleId: string,
-  currentUserId: string
-): Promise<ApiResponse> => {
+export const getPendingInvitationsForVehicle = async (vehicleId: string, currentUserId: string) => {
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (v, { eq }) => eq(v.id, vehicleId)
   });
@@ -342,24 +328,21 @@ export const getPendingInvitationsForVehicle = async (
       )
     );
 
-  return createSuccessResponse(
-    invitations.map((invitation) => ({
-      id: invitation.id,
-      email: invitation.email,
-      name: invitation.name,
-      username: invitation.username,
-      role: invitation.role as 'viewer' | 'editor',
-      createdAt: invitation.createdAt
-    })),
-    'Pending invitations retrieved successfully'
-  );
+  return invitations.map((invitation) => ({
+    id: invitation.id,
+    email: invitation.email,
+    name: invitation.name,
+    username: invitation.username,
+    role: invitation.role as 'viewer' | 'editor',
+    createdAt: invitation.createdAt
+  }));
 };
 
 export const cancelInvitation = async (
   invitationId: string,
   vehicleId: string,
   currentUserId: string
-): Promise<ApiResponse> => {
+) => {
   const vehicle = await db.query.vehicleTable.findFirst({
     where: (v, { eq }) => eq(v.id, vehicleId)
   });
@@ -383,7 +366,7 @@ export const cancelInvitation = async (
 
   await db.delete(schema.invitationTable).where(eq(schema.invitationTable.id, invitationId));
 
-  return createSuccessResponse(null, 'Invitation cancelled successfully');
+  return null;
 };
 
 // ── App (login) invitations ──
@@ -424,10 +407,7 @@ export const getPendingAppInvitations = async (): Promise<PendingAppInvitation[]
   }));
 };
 
-export const cancelAppInvitation = async (
-  invitationId: string,
-  currentUserId: string
-): Promise<ApiResponse> => {
+export const cancelAppInvitation = async (invitationId: string, currentUserId: string) => {
   const invitation = await db.query.invitationTable.findFirst({
     where: (i, { eq, and }) =>
       and(eq(i.id, invitationId), isNull(i.vehicleId), eq(i.status, 'pending'))
@@ -439,5 +419,5 @@ export const cancelAppInvitation = async (
 
   await db.delete(schema.invitationTable).where(eq(schema.invitationTable.id, invitationId));
 
-  return createSuccessResponse(null, 'Invitation cancelled successfully');
+  return null;
 };

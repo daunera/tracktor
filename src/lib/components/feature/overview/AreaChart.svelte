@@ -2,7 +2,7 @@
   import * as Chart from '$ui/chart/index.js';
   import { scaleUtc } from 'd3-scale';
   import { curveCatmullRom } from 'd3-shape';
-  import { Area, AreaChart, LinearGradient, type AreaChartPropsObjProp } from 'layerchart';
+  import { Area, AreaChart, LinearGradient, type AreaChartProps } from 'layerchart';
   import type { DataPoint } from '$lib/domain';
   import LabelWithIcon from '$appui/LabelWithIcon.svelte';
   import CircleSlash2 from '@lucide/svelte/icons/circle-slash-2';
@@ -40,7 +40,7 @@
       motion: 'tween'
     },
     xAxis: {
-      format: (v) => v.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+      format: (v: Date) => v.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
       tickLabelProps: {
         rotate: 325,
         textAnchor: 'end'
@@ -50,7 +50,7 @@
       style: 'stroke-dasharray: 2',
       class: 'stroke-1'
     }
-  } satisfies AreaChartPropsObjProp;
+  } satisfies AreaChartProps<unknown>['props'];
 
   const chartConfig = $derived({
     data: {
@@ -135,20 +135,21 @@
             {/snippet}
           </Chart.Tooltip>
         {/snippet}
-        {#snippet marks({ series, getAreaProps }: any)}
-          {#each series as s, i (s.key)}
+        {#snippet marks({ context })}
+          {#each context.series.visibleSeries as s (s.key)}
             {#if s.key === 'y'}
               <LinearGradient
                 stops={[s.color ?? '', 'color-mix(in lch, ' + s.color + ' 10%, transparent)']}
                 vertical
               >
                 {#snippet children({ gradient })}
-                  <Area {...getAreaProps(s, i)} fill={gradient} />
+                  <Area seriesKey={s.key} {...chartProps.area} fill={gradient} />
                 {/snippet}
               </LinearGradient>
             {:else}
               <Area
-                {...getAreaProps(s, i)}
+                seriesKey={s.key}
+                {...chartProps.area}
                 fill="none"
                 line={{
                   stroke: s.color ?? 'var(--muted-foreground)',

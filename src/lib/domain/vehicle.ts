@@ -11,12 +11,12 @@ export interface Vehicle {
   odometer: number | null;
   insuranceStatus?: string;
   puccStatus?: string;
-  image: string | null;
+  image?: string | null;
   fuelType: 'petrol' | 'diesel' | 'electric' | 'lpg' | 'cng';
   customFields?: Record<string, string> | null;
   userId?: string;
   ownerName?: string | null;
-  ownerUsername?: string;
+  ownerUsername?: string | null;
 }
 
 export const FUEL_TYPES = {
@@ -78,7 +78,7 @@ export const vehicleSchema = z.object({
     .regex(/^(#[0-9a-fA-F]{3})|(#[0-9a-fA-F]{6})$/, 'Only hex color codes allowed.')
     .nullable(),
   odometer: z.number().nonnegative().nullable(),
-  image: z.string().nullable(),
+  image: z.string().nullable().optional(),
   fuelType: z.enum(['petrol', 'diesel', 'electric', 'lpg', 'cng']).default('petrol'),
   customFields: z.record(z.string(), z.string()).nullable().optional()
 });

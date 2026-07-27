@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as vehicleShareService from '$server/services/vehicleShareService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/vehicles/[id]/shares/me - Get the current user's share for a vehicle
 export const GET: RequestHandler = async (event) => {
@@ -19,6 +19,6 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const result = await vehicleShareService.getShareForUser(id, user.id);
-    return json(result);
+    return jsonResponse(result);
   });
 };

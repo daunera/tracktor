@@ -1,7 +1,9 @@
-import { error, json } from '@sveltejs/kit';
-import { ZodError } from 'zod';
+import { error, json, type RequestEvent } from '@sveltejs/kit';
+import type { ApiResponse } from '$lib/response';
+import { z, ZodError } from 'zod';
 import { AppError } from '$server/exceptions/AppError';
 import * as m from '$lib/paraglide/messages';
+import logger from '$server/config/logger';
 
 const getLocale = (e: { request: Request }): string | undefined => {
   try {
@@ -63,6 +65,36 @@ export function rethrowRouteError(err: unknown, fallbackMessage?: string): never
   throw error(500, fallbackMessage ?? m.api_internal_error());
 }
 
+export function jsonResponse<T>(
+  data: T,
+  message?: string,
+  init?: Parameters<typeof json>[1]
+): Response {
+  const response: ApiResponse<T> = { success: true, data };
+  if (message) response.message = message;
+  return json(response, init);
+}
+
+export async function parseBody<T>(
+  event: RequestEvent,
+  schema: z.ZodType<T>,
+  overrides?: Record<string, unknown>
+): Promise<T> {
+  const body = await event.request.json();
+  const input = overrides ? { ...body, ...overrides } : body;
+  const result = schema.safeParse(input);
+  if (!result.success) {
+    const messages = result.error.issues
+      .map((issue) => {
+        const path = issue.path.length ? `${issue.path.join('.')}: ` : '';
+        return `${path}${issue.message}`;
+      })
+      .join('; ');
+    throw error(400, `Validation failed: ${messages}`);
+  }
+  return result.data;
+}
+
 export async function withRouteErrorHandling<T>(
   label: string,
   handler: () => Promise<T>,
@@ -72,7 +104,7 @@ export async function withRouteErrorHandling<T>(
     return await handler();
   } catch (err) {
     if (!isFrameworkError(err)) {
-      console.error(label, err);
+      logger.error(label, err);
     }
     rethrowRouteError(err, fallbackMessage);
   }
@@ -88,7 +120,7 @@ export async function withJsonErrorHandling<T>(
     return await handler();
   } catch (err) {
     if (!isFrameworkError(err)) {
-      console.error(label, err);
+      logger.error(label, err);
     }
     return json(
       {

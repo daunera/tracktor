@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/auth/users - List all users (superadmin only)
 export const GET: RequestHandler = async (event) => {
@@ -20,6 +20,6 @@ export const GET: RequestHandler = async (event) => {
     const statusFilter = url.searchParams.get('status') || undefined;
 
     const result = await authService.getUsers(statusFilter);
-    return json(result);
+    return jsonResponse(result);
   });
 };

@@ -1,10 +1,9 @@
-import type { ApiResponse } from '$lib';
 import {
   NOTIFICATION_CHANNELS,
   NOTIFICATION_SOURCES,
   NOTIFICATION_TYPES
 } from '$lib/domain/notification';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '$server/db';
 import * as schema from '$server/db/schema';
@@ -13,26 +12,17 @@ import {
   formatReminderMessage,
   getDaysUntil,
   isReminderAvailable,
+  NOTIFICATION_TYPE_META,
   sortNotificationsByDueDate,
   type GeneratedNotification
 } from './notification-service.helper';
-import { createFailureResponse, createSuccessResponse } from './service-response.helper';
 import { getAppConfigByKey } from './configService';
 import * as m from '$lib/paraglide/messages';
+import { createFailureResponse } from './service-response.helper';
 
 type NotificationType = keyof typeof NOTIFICATION_TYPES;
 type NotificationSource = keyof typeof NOTIFICATION_SOURCES;
 type NotificationChannel = keyof typeof NOTIFICATION_CHANNELS;
-
-const CHANNEL_BY_TYPE: Record<NotificationType, NotificationChannel> = {
-  reminder: 'reminder',
-  alert: 'alert',
-  maintenance: 'information',
-  insurance: 'alert',
-  pollution: 'alert',
-  registration: 'alert',
-  information: 'information'
-};
 
 async function buildReminderNotifications(vehicleId: string): Promise<GeneratedNotification[]> {
   const reminders = await db.query.reminderTable.findMany({
@@ -48,7 +38,7 @@ async function buildReminderNotifications(vehicleId: string): Promise<GeneratedN
       return {
         vehicleId,
         type: 'reminder',
-        channel: CHANNEL_BY_TYPE.reminder,
+        channel: NOTIFICATION_TYPE_META.reminder.channel,
         message: formatReminderMessage(reminder.type, reminder.note, dueDate),
         source: 'system',
         dueDate: dueDate.toISOString(),
@@ -75,7 +65,7 @@ async function buildInsuranceNotifications(vehicleId: string): Promise<Generated
       return {
         vehicleId,
         type: 'insurance' as const,
-        channel: CHANNEL_BY_TYPE.insurance,
+        channel: NOTIFICATION_TYPE_META.insurance.channel,
         message: formatExpiryMessage(
           m.notif_label_insurance_policy(),
           policy.policyNumber,
@@ -106,7 +96,7 @@ async function buildPuccNotifications(vehicleId: string): Promise<GeneratedNotif
       return {
         vehicleId,
         type: 'pollution' as const,
-        channel: CHANNEL_BY_TYPE.pollution,
+        channel: NOTIFICATION_TYPE_META.pollution.channel,
         message: formatExpiryMessage(
           m.notif_label_pucc_certificate(),
           certificate.certificateNumber,
@@ -123,7 +113,7 @@ async function buildAvailableNotifications(vehicleId: string): Promise<Generated
   let puccEnabled = true;
   try {
     const puccConfig = await getAppConfigByKey('featurePucc');
-    if (puccConfig.success) puccEnabled = puccConfig.data?.value !== 'false';
+    if (puccConfig?.value) puccEnabled = puccConfig.value !== 'false';
   } catch {
     // key not in DB yet — default to enabled
   }
@@ -158,45 +148,34 @@ async function removeStaleNotifications(vehicleId: string, activeKeys: Set<strin
 }
 
 export async function syncVehicleNotifications(vehicleId: string): Promise<void> {
-  const availableNotifications = await buildAvailableNotifications(vehicleId);
-  const activeKeys = new Set(
-    availableNotifications.map((notification) => notification.notificationKey)
-  );
+  const notifications = await buildAvailableNotifications(vehicleId);
+  const activeKeys = new Set(notifications.map((n) => n.notificationKey));
 
-  for (const notification of availableNotifications) {
-    const existing = await db.query.notificationTable.findFirst({
-      where: (record, { and, eq }) =>
-        and(
-          eq(record.vehicleId, vehicleId),
-          eq(record.source, notification.source),
-          eq(record.notificationKey, notification.notificationKey)
-        )
-    });
-
-    if (existing) {
-      await db
-        .update(schema.notificationTable)
-        .set({
-          type: notification.type,
-          channel: notification.channel,
-          message: notification.message,
-          dueDate: notification.dueDate
-        })
-        .where(eq(schema.notificationTable.id, existing.id));
-      continue;
-    }
-
-    await db.insert(schema.notificationTable).values({
-      vehicleId: notification.vehicleId,
-      type: notification.type,
-      channel: notification.channel,
-      message: notification.message,
-      source: notification.source,
-      dueDate: notification.dueDate,
-      notificationKey: notification.notificationKey,
-      isRead: false,
-      clearedAt: null
-    });
+  if (notifications.length > 0) {
+    await db
+      .insert(schema.notificationTable)
+      .values(
+        notifications.map((n) => ({
+          vehicleId: n.vehicleId,
+          type: n.type,
+          channel: n.channel,
+          message: n.message,
+          source: n.source,
+          dueDate: n.dueDate,
+          notificationKey: n.notificationKey,
+          isRead: false,
+          clearedAt: null
+        }))
+      )
+      .onConflictDoUpdate({
+        target: schema.notificationTable.notificationKey,
+        set: {
+          type: sql.raw('excluded.type'),
+          channel: sql.raw('excluded.channel'),
+          message: sql.raw('excluded.message'),
+          dueDate: sql.raw('excluded.due_date')
+        }
+      });
   }
 
   await removeStaleNotifications(vehicleId, activeKeys);
@@ -210,9 +189,7 @@ export async function syncAllNotifications(): Promise<void> {
   }
 }
 
-export const getNotifications = async (vehicleId: string): Promise<ApiResponse> => {
-  await syncVehicleNotifications(vehicleId);
-
+export const getNotifications = async (vehicleId: string) => {
   const notifications = await db.query.notificationTable.findMany({
     where: (notification, { and, eq, isNull }) =>
       and(eq(notification.vehicleId, vehicleId), isNull(notification.clearedAt)),
@@ -223,14 +200,10 @@ export const getNotifications = async (vehicleId: string): Promise<ApiResponse> 
     ]
   });
 
-  return createSuccessResponse(notifications);
+  return notifications;
 };
 
-export const getPendingNotificationsForChannels = async (
-  channels: NotificationChannel[]
-): Promise<ApiResponse> => {
-  await syncAllNotifications();
-
+export const getPendingNotificationsForChannels = async (channels: NotificationChannel[]) => {
   const notifications = await db.query.notificationTable.findMany({
     where: (notification, { and, eq, inArray, isNull }) =>
       and(
@@ -241,24 +214,20 @@ export const getPendingNotificationsForChannels = async (
     orderBy: (notification, { asc }) => [asc(notification.dueDate), asc(notification.created_at)]
   });
 
-  return createSuccessResponse(notifications);
+  return notifications;
 };
 
-export const getActiveNotificationsForChannels = async (
-  channels: NotificationChannel[]
-): Promise<ApiResponse> => {
-  await syncAllNotifications();
-
+export const getActiveNotificationsForChannels = async (channels: NotificationChannel[]) => {
   const notifications = await db.query.notificationTable.findMany({
     where: (notification, { and, inArray, isNull }) =>
       and(inArray(notification.channel, channels), isNull(notification.clearedAt)),
     orderBy: (notification, { asc }) => [asc(notification.dueDate), asc(notification.created_at)]
   });
 
-  return createSuccessResponse(notifications);
+  return notifications;
 };
 
-export const clearNotification = async (notificationId: string): Promise<ApiResponse> => {
+export const clearNotification = async (notificationId: string) => {
   const existingNotification = await db.query.notificationTable.findFirst({
     where: (notification, { eq }) => eq(notification.id, notificationId)
   });
@@ -277,10 +246,10 @@ export const clearNotification = async (notificationId: string): Promise<ApiResp
     .where(eq(schema.notificationTable.id, notificationId))
     .returning();
 
-  return createSuccessResponse(clearedNotifications[0], m.notif_cleared());
+  return clearedNotifications[0];
 };
 
-export const markNotificationAsRead = async (notificationId: string): Promise<ApiResponse> => {
+export const markNotificationAsRead = async (notificationId: string) => {
   const updatedNotification = await db
     .update(schema.notificationTable)
     .set({ isRead: true })
@@ -291,12 +260,10 @@ export const markNotificationAsRead = async (notificationId: string): Promise<Ap
     return createFailureResponse(m.notif_error_not_found(), null);
   }
 
-  return createSuccessResponse(updatedNotification[0], m.notif_marked_read());
+  return updatedNotification[0];
 };
 
-export const markAllNotificationsAsRead = async (vehicleId: string): Promise<ApiResponse> => {
-  await syncVehicleNotifications(vehicleId);
-
+export const markAllNotificationsAsRead = async (vehicleId: string) => {
   const updatedNotifications = await db
     .update(schema.notificationTable)
     .set({ isRead: true })
@@ -308,5 +275,5 @@ export const markAllNotificationsAsRead = async (vehicleId: string): Promise<Api
     )
     .returning();
 
-  return createSuccessResponse(updatedNotifications, m.notif_all_marked_read());
+  return updatedNotifications;
 };

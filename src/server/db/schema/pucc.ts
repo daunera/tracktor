@@ -1,25 +1,27 @@
 import { sqliteTable as table } from 'drizzle-orm/sqlite-core';
 import * as t from 'drizzle-orm/sqlite-core';
 import { vehicleTable } from './vehicle';
-import { timestamps, auditUser } from './audit';
+import { timestamps, idColumn, recurrenceColumns, auditUser } from './audit';
 
-export const pollutionCertificateTable = table('pollution_certificates', {
-  id: t
-    .text()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  vehicleId: t
-    .text()
-    .notNull()
-    .references(() => vehicleTable.id, { onDelete: 'cascade' }),
-  certificateNumber: t.text().notNull(),
-  issueDate: t.text().notNull(),
-  expiryDate: t.text(),
-  recurrenceType: t.text().notNull().default('none'),
-  recurrenceInterval: t.integer().notNull().default(1),
-  testingCenter: t.text().notNull(),
-  notes: t.text(),
-  attachment: t.text(),
-  ...timestamps,
-  ...auditUser
-});
+export const pollutionCertificateTable = table(
+  'pollution_certificates',
+  {
+    ...idColumn,
+    vehicleId: t
+      .text()
+      .notNull()
+      .references(() => vehicleTable.id, { onDelete: 'cascade' }),
+    certificateNumber: t.text().notNull(),
+    issueDate: t.text().notNull(),
+    expiryDate: t.text(),
+    ...recurrenceColumns,
+    testingCenter: t.text().notNull(),
+    notes: t.text(),
+    attachment: t.text(),
+    ...timestamps,
+    ...auditUser
+  },
+  (table) => ({
+    vehicleIdIdx: t.index('idx_pollution_certificates_vehicle_id').on(table.vehicleId)
+  })
+);

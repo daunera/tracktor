@@ -1,5 +1,5 @@
-import { parseDate } from '$lib/helper/format.helper';
 import { z } from 'zod';
+import { apiDateString, optionalApiDateString } from './shared';
 
 export const INSURANCE_RECURRENCE_TYPES = {
   none: 'none',
@@ -77,7 +77,7 @@ const insuranceRecurrenceOptions = Object.keys(
   INSURANCE_RECURRENCE_TYPES
 ) as (keyof typeof INSURANCE_RECURRENCE_TYPES)[];
 
-export const insuranceSchema = z.object({
+const insuranceBaseSchema = z.object({
   id: z.string().nullable(),
   vehicleId: z.uuid(),
   provider: z
@@ -88,15 +88,8 @@ export const insuranceSchema = z.object({
     .string()
     .min(2, 'It must be more than 1 character.')
     .max(50, 'It must be less than 50 characters.'),
-  startDate: z.string().refine((val) => {
-    try {
-      parseDate(val);
-      return true;
-    } catch {
-      return false;
-    }
-  }, 'Invalid date format'),
-  endDate: z.string().nullable().optional(),
+  startDate: apiDateString,
+  endDate: optionalApiDateString,
   recurrenceType: z
     .enum(
       insuranceRecurrenceOptions as [
@@ -114,5 +107,19 @@ export const insuranceSchema = z.object({
     .nullable(),
   attachmentPassword: z.string().nullable()
 });
+
+export const insuranceSchema = insuranceBaseSchema.refine(
+  (data) => {
+    if (data.recurrenceType === undefined) return true;
+    if (data.recurrenceType !== 'none') return true;
+    if (data.endDate === undefined) return true;
+    if (!data.endDate) return false;
+    if (!data.startDate) return true;
+    return new Date(data.endDate) > new Date(data.startDate);
+  },
+  { message: 'End date must be after start date when recurrence is fixed' }
+);
+
+export const insurancePartialSchema = insuranceBaseSchema.partial();
 
 export type InsuranceSchema = typeof insuranceSchema;

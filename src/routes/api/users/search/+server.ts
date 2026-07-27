@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 import * as authService from '$server/services/authService';
-import { withRouteErrorHandling } from '$server/utils/route-handler';
+import { jsonResponse, withRouteErrorHandling } from '$server/utils/route-handler';
 
 // GET /api/users/search?q= - Search active users by exact email match for sharing
 export const GET: RequestHandler = async (event) => {
@@ -18,6 +18,6 @@ export const GET: RequestHandler = async (event) => {
     }
 
     const result = await authService.searchUsers(query);
-    return json(result);
+    return jsonResponse(result);
   });
 };

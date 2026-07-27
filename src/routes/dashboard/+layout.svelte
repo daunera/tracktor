@@ -12,7 +12,6 @@
   import CirclePlus from '@lucide/svelte/icons/circle-plus';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import {
     app_title,
     app_add_vehicle,
@@ -20,7 +19,7 @@
     app_empty_select_hint
   } from '$lib/paraglide/messages/_index.js';
 
-  let { children } = $props();
+  let { data, children } = $props();
 
   let isLoading = $state(true);
 
@@ -39,20 +38,27 @@
   );
   const showSharing = $derived(isOwner || isSharedUser);
 
-  onMount(async () => {
-    configStore.refreshConfigs();
+  $effect.pre(() => {
+    if (data.rawConfigs) {
+      configStore.setConfigs(data.rawConfigs);
+    }
+    if (data.vehicles) {
+      vehicleStore.setVehicles(data.vehicles);
+    }
+    if (data.user) {
+      authStore.user = data.user;
+      authStore.isLoggedIn = true;
+    }
 
-    await authStore.checkAuthStatus();
-    if (!authStore.isLoggedIn) {
+    if (!data.user) {
       goto('/login', { replaceState: true });
       return;
     }
-    if (authStore.user?.status === 'pending') {
+    if (data.user?.status === 'pending') {
       goto('/pending', { replaceState: true });
       return;
     }
 
-    vehicleStore.refreshVehicles();
     isLoading = false;
   });
 
