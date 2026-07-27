@@ -63,7 +63,8 @@ export const updateInsurance = async (
 
 export const getInsurances = async (vehicleId: string) => {
   const insurance = await db.query.insuranceTable.findMany({
-    where: (insurances, { eq }) => eq(insurances.vehicleId, vehicleId)
+    where: (insurances, { eq }) => eq(insurances.vehicleId, vehicleId),
+    orderBy: (ins, { desc }) => [desc(ins.startDate)]
   });
   const normalized = insurance.map((i) =>
     i.recurrenceType !== 'none' ? { ...i, endDate: null } : i

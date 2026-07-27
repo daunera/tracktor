@@ -26,7 +26,11 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
   }
 
   // Fetch configs and vehicles
-  const [configs, vehiclesResponse] = await Promise.all([getAppConfigs(), getAllVehicles()]);
+  const locale = cookies.get('PARAGLIDE_LOCALE') ?? 'en';
+  const [configs, vehiclesResponse] = await Promise.all([
+    getAppConfigs(),
+    getAllVehicles(undefined, locale)
+  ]);
 
   const rawConfigs = (configs || []).map((c) => ({
     ...c,

@@ -53,7 +53,7 @@ export const addVehicle = async (
   return parseVehicleRecord(vehicle);
 };
 
-export const getAllVehicles = async (userId?: string) => {
+export const getAllVehicles = async (userId?: string, locale = 'en') => {
   let accessibleIds: string[] | undefined;
   if (userId) {
     accessibleIds = await getAccessibleVehicleIds(userId);
@@ -162,6 +162,12 @@ export const getAllVehicles = async (userId?: string) => {
       insuranceStatus: getStatusFromDates(vehicleInsuranceDates, today),
       puccStatus: getStatusFromDates(vehiclePuccDates, today)
     };
+  });
+
+  enrichedVehicles.sort((a, b) => {
+    const makeCmp = a.make.localeCompare(b.make, locale);
+    if (makeCmp !== 0) return makeCmp;
+    return a.model.localeCompare(b.model, locale);
   });
 
   return enrichedVehicles;

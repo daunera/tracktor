@@ -34,6 +34,7 @@
   import {
     col_date,
     col_odometer,
+    col_distance_driven,
     col_filled,
     col_missed_last,
     col_cost,
@@ -85,7 +86,7 @@
         renderComponent(LabelWithIcon, {
           icon: CircleGauge,
           iconClass: 'h-4 w-4 ',
-          label: col_odometer(),
+          label: col_distance_driven(),
           style: 'justify-center'
         }),
       cell: ({ row }) => renderComponent(OdometerCell, { value: row.getValue('distanceDriven') })

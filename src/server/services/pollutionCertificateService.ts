@@ -58,7 +58,8 @@ export const updatePollutionCertificate = async (
 
 export const getPollutionCertificates = async (vehicleId: string) => {
   const pollutionCertificates = await db.query.pollutionCertificateTable.findMany({
-    where: (certificates, { eq }) => eq(certificates.vehicleId, vehicleId)
+    where: (certificates, { eq }) => eq(certificates.vehicleId, vehicleId),
+    orderBy: (cert, { desc }) => [desc(cert.issueDate)]
   });
   const normalized = pollutionCertificates.map((c) =>
     c.recurrenceType !== 'none' ? { ...c, expiryDate: null } : c

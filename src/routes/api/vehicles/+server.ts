@@ -5,7 +5,8 @@ import { jsonResponse, parseBody, withRouteErrorHandling } from '$server/utils/r
 
 export const GET: RequestHandler = async (event) => {
   return withRouteErrorHandling('Vehicles GET error:', async () => {
-    const result = await vehicleService.getAllVehicles(event.locals.user?.id);
+    const locale = event.cookies.get('PARAGLIDE_LOCALE') ?? 'en';
+    const result = await vehicleService.getAllVehicles(event.locals.user?.id, locale);
     return jsonResponse(result);
   });
 };
