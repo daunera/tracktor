@@ -12,7 +12,10 @@ class VehicleStore {
   setVehicles = (vehicles: Vehicle[]) => {
     this.vehicles = vehicles;
     if (vehicles && vehicles.length > 0) {
-      this.selectedId = vehicles[0].id || undefined;
+      // Preserve current selection if the vehicle still exists
+      if (!this.selectedId || !vehicles.some((v) => v.id === this.selectedId)) {
+        this.selectedId = vehicles[0].id || undefined;
+      }
     } else {
       this.selectedId = undefined;
     }
@@ -25,7 +28,10 @@ class VehicleStore {
       .then(({ data: res }) => {
         this.vehicles = res.data;
         if (this.vehicles && this.vehicles.length > 0) {
-          this.selectedId = this.vehicles[0].id || undefined;
+          // Preserve current selection if the vehicle still exists
+          if (!this.selectedId || !this.vehicles.some((v) => v.id === this.selectedId)) {
+            this.selectedId = this.vehicles[0].id || undefined;
+          }
         } else {
           this.selectedId = undefined;
         }
