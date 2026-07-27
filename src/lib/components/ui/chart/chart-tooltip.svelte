@@ -54,7 +54,7 @@
   // Filter to series with defined values (important for item-based charts like Pie/Arc
   // where only the hovered item has a value)
   const visibleSeries = $derived(
-    chartCtx.tooltip.payload.filter((s) => s.value !== undefined) as TooltipPayload[]
+    chartCtx.tooltip.series.filter((s: TooltipPayload) => s.value !== undefined)
   );
 
   const formattedLabel = $derived.by(() => {

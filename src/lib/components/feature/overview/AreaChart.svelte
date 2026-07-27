@@ -135,26 +135,21 @@
             {/snippet}
           </Chart.Tooltip>
         {/snippet}
-        {#snippet marks({
-          getAreaProps,
-          visibleSeries
-        }: {
-          getAreaProps: (s: any, i: number) => any;
-          visibleSeries: any[];
-        })}
-          {#each visibleSeries as s, i (s.key)}
+        {#snippet marks({ context })}
+          {#each context.series.visibleSeries as s (s.key)}
             {#if s.key === 'y'}
               <LinearGradient
                 stops={[s.color ?? '', 'color-mix(in lch, ' + s.color + ' 10%, transparent)']}
                 vertical
               >
                 {#snippet children({ gradient })}
-                  <Area {...getAreaProps(s, i)} fill={gradient} />
+                  <Area seriesKey={s.key} {...chartProps.area} fill={gradient} />
                 {/snippet}
               </LinearGradient>
             {:else}
               <Area
-                {...getAreaProps(s, i)}
+                seriesKey={s.key}
+                {...chartProps.area}
                 fill="none"
                 line={{
                   stroke: s.color ?? 'var(--muted-foreground)',
