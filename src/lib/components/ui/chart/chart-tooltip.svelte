@@ -54,7 +54,7 @@
   // Filter to series with defined values (important for item-based charts like Pie/Arc
   // where only the hovered item has a value)
   const visibleSeries = $derived(
-    chartCtx.tooltip.series.filter((s: TooltipPayload) => s.value !== undefined)
+    chartCtx.tooltip.payload.filter((s) => s.value !== undefined) as TooltipPayload[]
   );
 
   const formattedLabel = $derived.by(() => {
@@ -122,7 +122,7 @@
           chart.config,
           item,
           key,
-          chartCtx.tooltip.data
+          chartCtx.tooltip.data as Record<string, unknown> | null
         )}
         {@const indicatorColor = color || item.config?.color || item.color}
         <div
@@ -167,7 +167,7 @@
                   {itemConfig?.label || item.label}
                 </span>
               </div>
-              {#if item.value !== undefined}
+              {#if item.value != null}
                 <span class="text-foreground font-mono font-medium tabular-nums">
                   {item.value.toLocaleString()}
                 </span>

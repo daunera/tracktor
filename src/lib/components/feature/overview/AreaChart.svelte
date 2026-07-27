@@ -135,28 +135,20 @@
             {/snippet}
           </Chart.Tooltip>
         {/snippet}
-        {#snippet marks({ context }: { context: any })}
-          {#each context.series.visibleSeries as s (s.key)}
+        {#snippet marks({ getAreaProps, visibleSeries }: { getAreaProps: (s: any, i: number) => any; visibleSeries: any[] })}
+          {#each visibleSeries as s, i (s.key)}
             {#if s.key === 'y'}
               <LinearGradient
                 stops={[s.color ?? '', 'color-mix(in lch, ' + s.color + ' 10%, transparent)']}
                 vertical
               >
                 {#snippet children({ gradient })}
-                  <Area
-                    seriesKey={s.key}
-                    curve={curveCatmullRom}
-                    fillOpacity={0.4}
-                    line={{ class: 'stroke-2' }}
-                    motion="tween"
-                    fill={gradient}
-                  />
+                  <Area {...getAreaProps(s, i)} fill={gradient} />
                 {/snippet}
               </LinearGradient>
             {:else}
               <Area
-                seriesKey={s.key}
-                curve={curveCatmullRom}
+                {...getAreaProps(s, i)}
                 fill="none"
                 line={{
                   stroke: s.color ?? 'var(--muted-foreground)',

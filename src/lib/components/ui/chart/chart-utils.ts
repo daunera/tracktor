@@ -1,4 +1,3 @@
-import type { Tooltip } from 'layerchart';
 import { getContext, setContext, type Component, type Snippet } from 'svelte';
 
 export const THEMES = { light: '', dark: '.dark' } as const;
@@ -15,15 +14,35 @@ export type ChartConfig = {
 
 export type ExtractSnippetParams<T> = T extends Snippet<[infer P]> ? P : never;
 
-export type TooltipPayload = Tooltip.TooltipSeries;
+/**
+ * Mirrors the internal `TooltipPayload` from layerchart
+ * (not re-exported through the public API — defined in
+ * `dist/components/tooltip/tooltipMetaContext.d.ts`).
+ *
+ * The extra `config` field supports the ChartConfig-based indicator color
+ * resolution used by Chart.Tooltip (`item.config?.color || item.color`).
+ */
+export type TooltipPayload = {
+  color?: string;
+  name?: string;
+  key: string;
+  label?: string;
+  value?: unknown;
+  chartType?: 'bar' | 'area' | 'line' | 'pie' | 'scatter';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload: any;
+  rawSeriesData?: Record<string, unknown>;
+  formatter?: Record<string, unknown>;
+  /** Custom extension — the resolved ChartConfig entry for this series. */
+  config?: Record<string, unknown>;
+};
 
 // Helper to extract item config from a payload.
 export function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: TooltipPayload,
   key: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: Record<string, any> | null
+  data?: Record<string, unknown> | null
 ) {
   if (typeof payload !== 'object' || payload === null) return undefined;
 
