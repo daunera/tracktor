@@ -21,7 +21,7 @@
 
   let { data, children } = $props();
 
-  let isLoading = $state(false);
+  let isLoading = $state(true);
 
   const selectedVehicle = $derived(
     vehicleStore.vehicles?.find((v) => v.id === vehicleStore.selectedId) || null
